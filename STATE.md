@@ -1,10 +1,10 @@
 # Footage Sync — Development State
 
-> Current development truth, updated 2026-10-06. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
+> Current development truth, updated 2026-10-07. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
 
 ## Current phase
 
-**v0.1 preview packaging / first working UXP core.**
+**v0.1 preview release / first working UXP core.**
 
 Сборка `0.1.0` ранее установлена в Premiere Pro 2025 **25.6.2** на Windows, отдельно от Polden OBS Bridge. Подготовлен предварительный релиз v0.1: CCX и готовая Windows-папка в ZIP, инструкция и SHA256. Это не завершённый MVP. Установка именно release CCX через Creative Cloud ещё не проверена; новая identity-aware scanner cache правка в этой сессии не устанавливалась в host. FUT-001 интегрирован; принятые правила находятся в SPEC §16 и UI_SPEC §8. Исходные golden screenshots сохранены.
 
@@ -14,7 +14,9 @@
 
 Исходники: `plugin/`. Инструкция: [README.md](README.md). API findings и реальные host-проверки: [docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md).
 
-Приватный GitHub repository: [VslyDream/footage-sync](https://github.com/VslyDream/footage-sync). Release tag: `v0.1.0`; preview assets: CCX, Windows ZIP, инструкция и SHA256. Локальные test projects/media/diagnostics и deployment config прототипа исключены; существующий Git прототипа сохранён.
+Приватный GitHub repository: [VslyDream/footage-sync](https://github.com/VslyDream/footage-sync). [v0.1.0 Preview](https://github.com/VslyDream/footage-sync/releases/tag/v0.1.0) опубликован 2026-10-07; tag указывает на `011086b5b1659418abb04c1108ebb0a75cce25ea`. Assets: CCX, Windows ZIP, инструкция и SHA256. Локальные test projects/media/diagnostics и deployment config прототипа исключены; существующий Git прототипа сохранён.
+
+[VALIDATED — publication] Страница опубликованного release показывает четыре файла; все четыре server-side SHA256 сверены с локальными файлами. Подтверждение: `artifacts/release/github-release.png` (локально, исключено из Git). Install acceptance остаётся отдельным spike.
 
 ## Future vision / to-do
 
