@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.next/
+.vinext/
+.wrangler/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+*.prproj
+*.prproj.*
+*.prlock
+artifacts/
+.release-tools/
+docs/existing-plugins-before.json
+prototype/.openai/

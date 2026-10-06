@@ -1,0 +1,10 @@
+"use strict";
+const fs=require("node:fs"),path=require("node:path");
+const root=path.resolve(__dirname,".."),source=path.join(root,"plugin"),target=path.join(root,"artifacts/panel-spike");
+fs.mkdirSync(path.join(target,"core"),{recursive:true});
+for(const name of ["index.html","style.css","main-panel.js","core/panel-layout.js"]) fs.copyFileSync(path.join(source,name),path.join(target,name));
+const manifest=JSON.parse(fs.readFileSync(path.join(source,"manifest.json"),"utf8"));
+manifest.id="com.vsly.footage-sync.panel-spike";manifest.name="Footage Sync UI Probe";
+manifest.entrypoints[0].id="panelProbe";manifest.entrypoints[0].label.default="Footage Sync UI Probe";
+fs.writeFileSync(path.join(target,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
+console.log("Prepared isolated panel probe from production HTML/CSS/layout; no sync controller or project API mutations.");

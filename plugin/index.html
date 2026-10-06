@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><link rel="stylesheet" href="style.css"><script src="index.js"></script></head>
+<body>
+  <main id="main-panel" class="main-panel vertical">
+    <div class="main-actions">
+      <div id="links" class="main-action" role="button" tabindex="0" title="Links — manage linked folders" aria-label="Links">
+        <svg class="action-icon" width="26" height="26" viewBox="0 0 32 32"><path d="M3 3h18v13H3z M12 16h18v13H12z M12 19l9-9" fill="none" stroke="#bcbec2" stroke-width="1.8"/></svg>
+      </div>
+      <div id="sync" class="main-action" role="button" tabindex="0" title="Sync — scan and sync this project" aria-label="Sync">
+        <svg id="sync-icon" class="action-icon" width="26" height="26" viewBox="0 0 32 32"><path d="M25 8a12 12 0 1 1-13-3 M5 4h10v10" fill="none" stroke="#bcbec2" stroke-width="2.4"/></svg>
+        <svg id="sync-spinner" class="action-icon" width="26" height="26" viewBox="0 0 32 32" style="display:none"><circle cx="16" cy="5" r="2.4"/><circle cx="24" cy="8" r="2.4"/><circle cx="27" cy="16" r="2.4"/><circle cx="24" cy="24" r="2.4"/><circle cx="16" cy="27" r="2.4"/><circle cx="8" cy="24" r="2.4"/><circle cx="5" cy="16" r="2.4"/><circle cx="8" cy="8" r="2.4"/></svg>
+      </div>
+      <div id="status" class="main-action" role="button" tabindex="0" title="Status — view sync status" aria-label="Status">
+        <svg class="action-icon" width="26" height="26" viewBox="0 0 36 36"><path d="M2 18C8 4 28 4 34 18 28 32 8 32 2 18z" fill="none" stroke="#bcbec2" stroke-width="1.8"/><circle cx="18" cy="18" r="4" fill="#80baff"/></svg>
+        <span id="badge" class="badge" style="display:none"></span><span id="attention" class="attention" style="display:none">!</span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

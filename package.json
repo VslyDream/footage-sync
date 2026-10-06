@@ -1,0 +1,11 @@
+{
+  "name": "footage-sync",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/*.test.js",
+    "check": "node scripts/check.js",
+    "package": "pwsh -NoProfile -File scripts/build-release.ps1"
+  }
+}
