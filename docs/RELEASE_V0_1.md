@@ -40,3 +40,12 @@ Mac-пакет — JavaScript UXP с ID/version `com.vsly.footage-sync` / `0.1.0
 **Установка и работа на настоящем Mac пока не проверены.** Mac filesystem identity, privacy/permissions, APFS/SMB case/Unicode spelling, import/relink, UI и AUTO/lifecycle требуют real-host acceptance. Windows disk paths автоматически не переводятся в `/Volumes/...`; папку на Mac нужно выбрать заново в Links.
 
 Исходные Windows/CCX assets и тег `v0.1.0` сохраняются. Mac runtime отличается поправкой POSIX root paths; его source/packaging commit находится в main и указан ниже на GitHub release page.
+
+## Mac без Creative Cloud Desktop — ручная установка
+
+- `Footage-Sync-0.1.0-Mac-Manual.zip` — готовая папка `com.vsly.footage-sync_0.1.0` и инструкция. Сохранить проекты, закрыть Premiere, распаковать ZIP и скопировать папку целиком в `~/Library/Application Support/Adobe/UXP/Plugins/External`. В Finder открыть этот путь через Cmd + Shift + G; недостающие папки создать вручную. Затем запустить Premiere → `Window → UXP Plugins → Footage Sync → Footage Sync`.
+- `INSTALL_MAC_MANUAL_V0_1_RU.md`, `SHA256SUMS-Mac-Manual.txt` — подробная инструкция и отдельные контрольные суммы.
+
+Для установки этого ZIP Creative Cloud Desktop, CCX и UPIA не нужны. Ручное обновление выполняется заменой только собственной папки плагина после сохранения резервной копии за пределами External. Runtime совпадает с ранее опубликованным Mac CCX; остальные assets и tag не заменяются.
+
+Это preview/development способ: путь общей UXP-платформы подтверждён Adobe для XD, такой же manual flow для Premiere 25.6+ описан разработчиком Songfindr. **Реальная установка Footage Sync на Mac ещё не проверена.** Evidence и дальнейшая диагностика находятся в приложенной инструкции.

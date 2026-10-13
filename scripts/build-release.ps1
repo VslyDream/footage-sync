@@ -1,4 +1,6 @@
-param([switch]$MacOnly)
+param([switch]$MacOnly, [switch]$MacManual)
+$manualBuildOnly = [bool]$MacManual
+if ($MacManual) { $MacOnly = $true }
 $ErrorActionPreference = 'Stop'
 $releaseRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $releaseSource = Join-Path $releaseRoot 'plugin'
@@ -19,6 +21,11 @@ $releaseCCX = Join-Path $releaseDist $(if ($MacOnly) { "Footage-Sync-$releaseVer
 $releaseZIP = Join-Path $releaseDist $(if ($MacOnly) { "Footage-Sync-$releaseVersion-Mac.zip" } else { "Footage-Sync-$releaseVersion-Windows.zip" })
 $releaseInstructions = Join-Path $releaseRoot $(if ($MacOnly) { 'docs\INSTALL_MAC_V0_1_RU.md' } else { 'docs\INSTALL_V0_1_RU.md' })
 $releaseInstructionName = [IO.Path]::GetFileName($releaseInstructions)
+if ($MacManual) {
+    $releaseZIP = Join-Path $releaseDist "Footage-Sync-$releaseVersion-Mac-Manual.zip"
+    $releaseInstructions = Join-Path $releaseRoot 'docs\INSTALL_MAC_MANUAL_V0_1_RU.md'
+    $releaseInstructionName = [IO.Path]::GetFileName($releaseInstructions)
+}
 
 function New-ReleaseArchive([string]$archivePath, [string]$entryPrefix, [bool]$includeInstructions, [object[]]$inputFiles = $releaseFiles, [string]$inputRoot = $releaseSource) {
     $stream = [IO.File]::Open($archivePath, [IO.FileMode]::Create, [IO.FileAccess]::Write)
@@ -62,9 +69,14 @@ function Test-ReleaseArchive([string]$archivePath, [string]$entryPrefix, [bool]$
         }
     } finally { $archive.Dispose(); $stream.Dispose() }
 }
-New-ReleaseArchive $releaseCCX '' $false
-Test-ReleaseArchive $releaseCCX '' $false
-if ($MacOnly) {
+if (-not $manualBuildOnly) {
+    New-ReleaseArchive $releaseCCX '' $false
+    Test-ReleaseArchive $releaseCCX '' $false
+}
+if ($MacManual) {
+    New-ReleaseArchive $releaseZIP ($releaseFolder + '/') $true
+    Test-ReleaseArchive $releaseZIP ($releaseFolder + '/') $true
+} elseif ($MacOnly) {
     $bundleFiles = @((Get-Item -LiteralPath $releaseCCX))
     New-ReleaseArchive $releaseZIP '' $true $bundleFiles $releaseDist
     Test-ReleaseArchive $releaseZIP '' $true $bundleFiles $releaseDist
@@ -73,8 +85,9 @@ if ($MacOnly) {
     Test-ReleaseArchive $releaseZIP ($releaseFolder + '/') $true
 }
 Copy-Item -LiteralPath $releaseInstructions -Destination (Join-Path $releaseDist $releaseInstructionName) -Force
-$releaseChecksums = @($releaseCCX, $releaseZIP, (Join-Path $releaseDist $releaseInstructionName)) | ForEach-Object { (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + [IO.Path]::GetFileName($_) }
-$checksumName = if ($MacOnly) { 'SHA256SUMS-Mac.txt' } else { 'SHA256SUMS.txt' }
+$checksumInputs = if ($MacManual) { @($releaseZIP, (Join-Path $releaseDist $releaseInstructionName)) } else { @($releaseCCX, $releaseZIP, (Join-Path $releaseDist $releaseInstructionName)) }
+$releaseChecksums = $checksumInputs | ForEach-Object { (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + [IO.Path]::GetFileName($_) }
+$checksumName = if ($MacManual) { 'SHA256SUMS-Mac-Manual.txt' } elseif ($MacOnly) { 'SHA256SUMS-Mac.txt' } else { 'SHA256SUMS.txt' }
 [IO.File]::WriteAllText((Join-Path $releaseDist $checksumName), ($releaseChecksums -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
-Write-Output "Packaged and verified $($releaseFiles.Count) plugin files in CCX and $(if ($MacOnly) { 'Mac' } else { 'Windows' }) ZIP, version $releaseVersion."
+Write-Output "Packaged and verified $($releaseFiles.Count) plugin files in $(if ($MacManual) { 'Mac manual folder ZIP' } elseif ($MacOnly) { 'CCX and Mac ZIP' } else { 'CCX and Windows ZIP' }), version $releaseVersion."
 

@@ -41,6 +41,8 @@
 
 [LOCKED — user request 2026-10-13] В существующий v0.1.0 release добавляется Mac preview package с прежним baseline Premiere 25.6 и тем же plugin ID/version. [SPIKE] macOS installation, filesystem/permissions, host API и lifecycle acceptance ещё не выполнены; выпуск preview не является подтверждением полноценной macOS compatibility. Windows остаётся primary OS.
 
+[LOCKED — user request 2026-10-13] Для Mac нужен также preview ZIP с готовой папкой плагина для ручного копирования в пользовательский UXP External, как в Windows workflow. Этот путь установки не требует Creative Cloud Desktop. [SPIKE] Native Mac loading/permissions должны быть проверены; runtime, ID/version и функциональные правила не меняются из-за способа установки.
+
 ---
 
 ## 3. Core model

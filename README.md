@@ -6,6 +6,8 @@
 
 В том же релизе добавлен Mac preview: `Footage-Sync-0.1.0-Mac.zip` содержит Mac CCX и [инструкцию для macOS](docs/INSTALL_MAC_V0_1_RU.md). После распаковки открыть вложенный CCX через Creative Cloud Desktop. Mac-вариант включает исправление POSIX root paths; оригинальные Windows assets и tag сохраняются. На настоящем Mac эта сборка ещё не проверена.
 
+Для Mac без Creative Cloud Desktop: [Mac-Manual ZIP](https://github.com/VslyDream/footage-sync/releases/download/v0.1.0/Footage-Sync-0.1.0-Mac-Manual.zip). Распаковать и скопировать `com.vsly.footage-sync_0.1.0` в `~/Library/Application Support/Adobe/UXP/Plugins/External`, затем перезапустить Premiere. [Пошаговая инструкция](docs/INSTALL_MAC_MANUAL_V0_1_RU.md). Runtime тот же, что в Mac CCX; native Mac acceptance ещё не выполнена.
+
 ## Установленная сборка
 
 На этой машине плагин установлен отдельно от Polden OBS Bridge:
@@ -59,6 +61,7 @@ npm test
 npm run check
 npm run package
 npm run package:mac
+npm run package:mac:manual
 ```
 
 Тесты проверяют reconciliation, identity matching, отсутствие duplicate/delete actions, блокировку batch и отмену устаревшего решения после изменения проекта/источника. Реальные host-проверки описаны в [docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md); снимки собственного runtime-state сохранены в `artifacts/`.
