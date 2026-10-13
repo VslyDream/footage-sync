@@ -14,9 +14,9 @@
 
 Исходники: `plugin/`. Инструкция: [README.md](README.md). API findings и реальные host-проверки: [docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md).
 
-Приватный GitHub repository: [VslyDream/footage-sync](https://github.com/VslyDream/footage-sync). [v0.1.0 Preview](https://github.com/VslyDream/footage-sync/releases/tag/v0.1.0) опубликован 2026-10-07; tag указывает на `011086b5b1659418abb04c1108ebb0a75cce25ea`. Assets: CCX, Windows ZIP, инструкция и SHA256. Локальные test projects/media/diagnostics и deployment config прототипа исключены; существующий Git прототипа сохранён.
+Приватный GitHub repository: [VslyDream/footage-sync](https://github.com/VslyDream/footage-sync). [v0.1.0 Preview](https://github.com/VslyDream/footage-sync/releases/tag/v0.1.0) опубликован 2026-10-07; tag указывает на `011086b5b1659418abb04c1108ebb0a75cce25ea`. В тот же release 2026-10-13 добавлены Mac CCX/ZIP, Mac-инструкция и отдельный SHA256SUMS-Mac; исходные четыре assets сохранены. Mac source/packaging commit: `c089661535d733e11af5f654f36848b733ebca8b`. Локальные test projects/media/diagnostics и deployment config прототипа исключены; существующий Git прототипа сохранён.
 
-[VALIDATED — publication] Страница опубликованного release показывает четыре файла; все четыре server-side SHA256 сверены с локальными файлами. Подтверждение: `artifacts/release/github-release.png` (локально, исключено из Git). Install acceptance остаётся отдельным spike.
+[VALIDATED — publication] Страница опубликованного release показывает восемь файлов (+ два source archives); все восемь server-side SHA256 сверены с локальными файлами, четыре исходных hash сохранились. Подтверждение: `artifacts/release/github-release-mac.png` (локально, исключено из Git). Install acceptance остаётся отдельным spike.
 
 [VALIDATED — Mac preview packaging] Для того же v0.1.0 подготовлены отдельные `Footage-Sync-0.1.0-Mac.ccx`, Mac ZIP (CCX + инструкция), `INSTALL_MAC_V0_1_RU.md` и `SHA256SUMS-Mac.txt`. `npm run package:mac` не перезаписывает исходные Windows/CCX assets или их checksums. Сверены 18 plugin payloads с source, вложенный CCX и инструкция — с отдельными файлами. Mac runtime включает только portability fix `paths.join` от `/`, предотвращающий ошибочный Windows UNC path. ID/version/baseline остаются прежними; original tag не перемещается. 81 tests и 15-module syntax/manifest check passed; EPERM rename в sandbox TEMP устранён запуском тестов с временными fixtures внутри workspace (изменение runtime/tests policy не потребовалось). [SPIKE] Native Mac installation, APFS/SMB identity/case/Unicode, permissions, import/relink, UI и AUTO/Productions не проверены. Это Mac preview, не validated macOS support.
 
@@ -107,6 +107,8 @@ Official evidence и local findings разделены в IMPLEMENTATION_NOTES. 
 ## Next
 
 Приоритет v0.1: выполнить установку release CCX/ZIP в host; проверить новую scanner правку и permissions. Затем проверить shared-profile root/bin anchor и read-only Production, согласовать adoption/migration и permanent Ignore/helper policy по research docs. До этого релиз остаётся preview.
+
+Mac: проверить установку нового Mac CCX на копии проекта, folder picker/Initial Sync/import/repeat/rename/relink и closed-panel AUTO. Переупаковка и production locks остаются прежними gaps; публикация Mac preview их не закрывает.
 
 1. FUT-001 перед release: закрыть crash/partial-failure acceptance и product decision для native Undo и XMP preference ON без молчаливого изменения настроек Premiere.
 2. Validate HELPER-001 через minimal hidden bundled job до automatic MP4 preparation. При подтверждённом конфликте с UX записать evidence/options и получить product decision до изменения SPEC.
