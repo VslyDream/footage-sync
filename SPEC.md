@@ -39,6 +39,8 @@
 - Новый продукт проектируется вокруг UXP.
 - Если конкретная функция упирается в ограничение UXP/Premiere version, это должно быть явно validated, а не assumed.
 
+[LOCKED — user request 2026-10-13] В существующий v0.1.0 release добавляется Mac preview package с прежним baseline Premiere 25.6 и тем же plugin ID/version. [SPIKE] macOS installation, filesystem/permissions, host API и lifecycle acceptance ещё не выполнены; выпуск preview не является подтверждением полноценной macOS compatibility. Windows остаётся primary OS.
+
 ---
 
 ## 3. Core model

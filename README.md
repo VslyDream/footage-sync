@@ -4,6 +4,8 @@
 
 Стандартный UXP-пакет — `.ccx`, который открывается через Adobe Creative Cloud Desktop. Установка этого CCX ещё не проверена в реальном host; для preview приложен ZIP с готовой папкой для `%APPDATA%\Adobe\UXP\Plugins\External`. Полные шаги и границы проверки: [инструкция v0.1](docs/INSTALL_V0_1_RU.md). Не держать External и CCX копии с одним ID одновременно.
 
+В том же релизе добавлен Mac preview: `Footage-Sync-0.1.0-Mac.zip` содержит Mac CCX и [инструкцию для macOS](docs/INSTALL_MAC_V0_1_RU.md). После распаковки открыть вложенный CCX через Creative Cloud Desktop. Mac-вариант включает исправление POSIX root paths; оригинальные Windows assets и tag сохраняются. На настоящем Mac эта сборка ещё не проверена.
+
 ## Установленная сборка
 
 На этой машине плагин установлен отдельно от Polden OBS Bridge:
@@ -56,6 +58,7 @@ Runtime не требует npm-зависимостей. Исходники н�
 npm test
 npm run check
 npm run package
+npm run package:mac
 ```
 
 Тесты проверяют reconciliation, identity matching, отсутствие duplicate/delete actions, блокировку batch и отмену устаревшего решения после изменения проекта/источника. Реальные host-проверки описаны в [docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md); снимки собственного runtime-state сохранены в `artifacts/`.

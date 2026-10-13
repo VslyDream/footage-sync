@@ -16,7 +16,7 @@ function clean(value) {
   return /^[a-z]:\//i.test(path) && parts.length===1 ? result+"/" : result;
 }
 function key(value) { const p = clean(value); return /^(?:[a-z]:|\/\/)/i.test(p) ? p.toLowerCase() : p; }
-function join(...parts) { return clean(parts.filter(Boolean).join("/")); }
+function join(...parts) { return clean(parts.filter(Boolean).reduce((base,part)=>base?base.replace(/[\\/]+$/,"")+"/"+String(part).replace(/^[\\/]+/,""):String(part),"")); }
 function dirname(p) { p = clean(p); const i=p.lastIndexOf("/"); return i<0?"":i===2 && /^[a-z]:\//i.test(p)?p.slice(0,3):p.slice(0,i)||"/"; }
 function basename(p) { return clean(p).split("/").pop(); }
 function isAbsolute(p) { return /^(?:[a-z]:[\\/]|[\\/])/i.test(p); }

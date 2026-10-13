@@ -1,6 +1,6 @@
 # Footage Sync — Development State
 
-> Current development truth, updated 2026-10-07. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
+> Current development truth, updated 2026-10-13. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
 
 ## Current phase
 
@@ -17,6 +17,8 @@
 Приватный GitHub repository: [VslyDream/footage-sync](https://github.com/VslyDream/footage-sync). [v0.1.0 Preview](https://github.com/VslyDream/footage-sync/releases/tag/v0.1.0) опубликован 2026-10-07; tag указывает на `011086b5b1659418abb04c1108ebb0a75cce25ea`. Assets: CCX, Windows ZIP, инструкция и SHA256. Локальные test projects/media/diagnostics и deployment config прототипа исключены; существующий Git прототипа сохранён.
 
 [VALIDATED — publication] Страница опубликованного release показывает четыре файла; все четыре server-side SHA256 сверены с локальными файлами. Подтверждение: `artifacts/release/github-release.png` (локально, исключено из Git). Install acceptance остаётся отдельным spike.
+
+[VALIDATED — Mac preview packaging] Для того же v0.1.0 подготовлены отдельные `Footage-Sync-0.1.0-Mac.ccx`, Mac ZIP (CCX + инструкция), `INSTALL_MAC_V0_1_RU.md` и `SHA256SUMS-Mac.txt`. `npm run package:mac` не перезаписывает исходные Windows/CCX assets или их checksums. Сверены 18 plugin payloads с source, вложенный CCX и инструкция — с отдельными файлами. Mac runtime включает только portability fix `paths.join` от `/`, предотвращающий ошибочный Windows UNC path. ID/version/baseline остаются прежними; original tag не перемещается. 81 tests и 15-module syntax/manifest check passed; EPERM rename в sandbox TEMP устранён запуском тестов с временными fixtures внутри workspace (изменение runtime/tests policy не потребовалось). [SPIKE] Native Mac installation, APFS/SMB identity/case/Unicode, permissions, import/relink, UI и AUTO/Productions не проверены. Это Mac preview, не validated macOS support.
 
 ## Future vision / to-do
 
@@ -58,7 +60,7 @@ FUT-001: UTF-8 parser, scanner TXT, discovery/policy service, project-contained 
 
 [VALIDATED — automated checks]
 
-**78 tests passed**, syntax check 15 JS modules и manifest passed. Покрыты reconciliation/identity/batch/races; TXT validation/discovery/settling/retry, ручной приоритет/auto OFF, range с номером строки, latest receipt repeats, Undo/missing-receipt Review, source-only target/colors, failed metadata/Replace и pending recovery. Panel tests проверяют fit при width/height, точный count 12345 + attention/disabled, анимацию и очистку timers на idle/error/zero size/destroy, root-scoped observer и fallback. Новые file-decision/container tests описаны выше. Fake-host Undo не доказывает native rollback; geometry tests не заменяют реальную DPI/keyboard acceptance.
+**81 tests passed**, syntax check 15 JS modules и manifest passed. Покрыты reconciliation/identity/batch/races; TXT validation/discovery/settling/retry, ручной приоритет/auto OFF, range с номером строки, latest receipt repeats, Undo/missing-receipt Review, source-only target/colors, failed metadata/Replace и pending recovery. Panel tests проверяют fit при width/height, точный count 12345 + attention/disabled, анимацию и очистку timers на idle/error/zero size/destroy, root-scoped observer и fallback. File-decision/container tests описаны выше; новые POSIX tests проверяют root join, native/relative paths и reuse/rename identity. Fake-host Undo не доказывает native rollback; geometry/POSIX tests не заменяют реальную Mac/DPI/keyboard acceptance.
 
 [VALIDATED — installation isolation]
 
@@ -82,7 +84,7 @@ FUT-001: UTF-8 parser, scanner TXT, discovery/policy service, project-contained 
 - Monitoring Footage project, когда активен другой проект Production, и read-only/locked project handling. Controller пока работает только с active saved project.
 - Performance profiling на больших деревьях и сетевом/Lucid storage, memory/cache bounds и длительная idle stability.
 - Stable identity на network/macOS volumes. При ненадёжной identity новый неоднозначный файл блокируется, а не угадывается по имени/размеру.
-- CCX release installation, permission UX acceptance и macOS support.
+- CCX release installation, permission UX acceptance и macOS real-host support acceptance. Mac preview packaging реализован; native Mac тестов нет.
 - Visual acceptance: FUT-002 реализован, narrow floating/docked и row проверены; новые runtime references предоставлены, старый Main Panel PNG сохранён как previous design. Новые снимки не являются отдельным пользовательским visual approval. Keyboard/nonzero-count host matrix, workspace restoration и recorded Windows DPI ещё требуют проверки. Плотность таблиц остальных окон вне FUT-002; table headers местами сжаты, Notifications Settings доступна через scroll.
 - History теперь различает zero-action deferred batch (`No changes applied`) и up-to-date. Предыдущая тестовая запись может оставаться в истории sidecar.
 
@@ -95,6 +97,7 @@ FUT-001: UTF-8 parser, scanner TXT, discovery/policy service, project-contained 
 | RENAME-001 | [VALIDATED locally] NTFS folder rename, filename rename и file move сохраняют IDs. [SPIKE] Network identity, cross-link directories, rapid moves, partial-error recovery. |
 | HELPER-001 | [LIMITATION — official shell recipe] shell.openPath требует consent, не принимает CLI args и не возвращает output. [SPIKE] Job-file/IPC и hidden launch на 25.6.2 не проверены. [VALIDATED — docs] Hybrid требует 26.2+/manifest 6; baseline нельзя повысить без решения. Options: docs/V0_1_REVIEW.md. |
 | STORE-002 | [VALIDATED] Sidecar implementation и persisted clip project metadata. [SPIKE] Root/bin shared-profile anchor, second-editor schema/Save/reopen/Undo и Production locks. Optional adoption/local migration proposal ещё не утверждён/не реализован. |
+| MAC-001 | [VALIDATED — packaging + automated checks] Mac CCX/ZIP с POSIX root path fix, 81 tests, exact payload/nested archive hashes. [SPIKE] Реальная установка/host/permissions/FS/lifecycle на Mac; архитектура JS-only не доказывает compatibility. |
 | PERF-001 | [SPIKE] Small-tree scan работает; MP4 payload не перечитывается. Large/network load ещё не measured. |
 | FUT-001 | [LOCKED] First-version rules. [VALIDATED locally] Source-only MP4 timing/colors, full Controller Sync, auto discovery, manual Append/Skip/Replace/repeat, media import despite TXT errors. [LIMITATION] Native Undo does not reliably undo source markers; XMP preference controls media writes. [VALIDATED locally] UI choices/picker, AUTO with closed panel after restart, recovery/reopen. [SPIKE] Crash/Productions/network/release guard. |
 | FUT-002 | [VALIDATED locally] Реализован, установлен, 52 × 262 floating content без overflow, compact docked и оба layout, busy animation, dialogs и zero-change Sync проверены. [SPIKE] DPI/workspace/keyboard/nonzero-count host matrix. [OPEN] Tools/native header API; native header fallback использован. |

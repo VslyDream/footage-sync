@@ -28,3 +28,15 @@
 - Cross-project Production monitoring, network/Lucid performance, некоторые recovery/UI сценарии, macOS и другие Premiere builds ещё требуют acceptance.
 
 Исходники и текущие результаты: README.md, STATE.md, docs/V0_1_REVIEW.md и docs/PROJECT_SETTINGS_RESEARCH.md. Тестовые проекты, media и локальные diagnostics не входят в релиз.
+
+## Mac preview — добавление 2026-10-13
+
+- `Footage-Sync-0.1.0-Mac.zip` — CCX и русская Mac-инструкция. Распаковать ZIP, открыть вложенный CCX двойным щелчком через Adobe Creative Cloud Desktop.
+- `Footage-Sync-0.1.0-Mac.ccx` — отдельный Mac-пакет для установки без внешнего ZIP.
+- `INSTALL_MAC_V0_1_RU.md` и `SHA256SUMS-Mac.txt` — инструкция и контрольные суммы новых файлов.
+
+Mac-пакет — JavaScript UXP с ID/version `com.vsly.footage-sync` / `0.1.0`, baseline Premiere 25.6+. Нативных библиотек и helper нет. Добавлено исправление соединения путей от POSIX root `/`; 81 автоматический тест и syntax/manifest checks прошли. Содержимое CCX (18 plugin files) и внешнего ZIP проверено по SHA256.
+
+**Установка и работа на настоящем Mac пока не проверены.** Mac filesystem identity, privacy/permissions, APFS/SMB case/Unicode spelling, import/relink, UI и AUTO/lifecycle требуют real-host acceptance. Windows disk paths автоматически не переводятся в `/Volumes/...`; папку на Mac нужно выбрать заново в Links.
+
+Исходные Windows/CCX assets и тег `v0.1.0` сохраняются. Mac runtime отличается поправкой POSIX root paths; его source/packaging commit находится в main и указан ниже на GitHub release page.
