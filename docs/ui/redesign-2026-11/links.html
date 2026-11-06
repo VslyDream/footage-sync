@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Links tab</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.hdr{flex:none;display:flex;align-items:center;height:46px;background:#29292d;border-bottom:1px solid #3a3a3e;padding:0 10px 0 16px}
+.brand{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#203b49;border:1px solid #3983a4;border-radius:4px;color:#8ed8f8;font-size:10px;margin-right:18px}
+.tab{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px;color:#a0a0a6;background:none;border:0;border-bottom:2px solid transparent;font:inherit;font-size:14px}
+.tab.on{color:#fff;border-bottom-color:#3088f1}
+.cnt{display:inline-block;min-width:20px;text-align:center;padding:1px 7px;border-radius:9px;background:#5a4320;color:#ffd68f;font-size:11px;font-weight:700}
+.wmore{margin-left:auto;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:transparent;padding:0}
+.strip{flex:none;display:flex;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid #36363a;font-size:12px;color:#8f8f96}
+.strip .v{color:#c4c4c9}
+.sw{flex:none;width:26px;height:14px;border-radius:7px;background:#1473e6;position:relative;border:0;padding:0;margin:0 2px}
+.sw span{position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:#fff}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12px;padding:2px 4px}
+.tools{flex:none;display:flex;align-items:center;gap:8px;padding:12px 18px 10px}
+.tf{width:300px;height:30px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:13px}
+.tf::placeholder{color:#8a8a90}
+.ibtn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #4a4a50;border-radius:4px;background:transparent;padding:0}
+.body{flex:1;min-height:0;padding:0 18px 12px;overflow:hidden}
+.wrap{position:relative}
+.table{border:1px solid #3c3c41;border-radius:5px;overflow:hidden}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) 190px 180px 36px;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-bottom:1px solid #333337}
+.tr:last-child{border-bottom:0}
+.th{background:#1c1c1f;color:#8f8f96;font-size:10px;letter-spacing:.06em;padding-top:7px;padding-bottom:7px}
+.bf strong{display:block;font-weight:600}
+.bf .p{color:#9a9aa0;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{font-size:10.5px;padding:1px 6px;border-radius:3px;background:#2e2e33;color:#c4c4ca}
+.tag.x{background:#33302a;color:#d9c49b}
+.st{display:flex;align-items:center;gap:6px;font-size:12px}
+.st .d{width:8px;height:8px;border-radius:50%;flex:none}
+.st .m{color:#9a9aa0}
+.more{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;border-radius:4px;padding:0}
+.more.on{background:#3a3a40}
+.tr.sel{background:#28282d}
+.tr.bad{background:#2a1f20}
+.menu{position:absolute;right:8px;top:84px;width:230px;background:#2e2e33;border:1px solid #55555b;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0;z-index:2}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:7px 12px}
+.menu button.hov{background:#1473e6;color:#fff}
+.menu .k{display:block;font-size:11px;color:#dbe9ff}
+.menu hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.menu .del{color:#ff9d9d}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 850px; height: 600px">
+  <div class="os"><span>Footage Sync</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="hdr">
+    <span class="brand" aria-hidden="true">FS</span>
+    <button class="tab">Changes<span class="cnt">4</span></button>
+    <button class="tab">History</button>
+    <button class="tab on" aria-current="page">Links</button>
+    <button class="tab">Settings</button>
+    <button class="wmore" aria-label="More"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+  </div>
+  <div class="strip">Into <span class="v">Expedition_S02_Footage.prproj</span> · new videos <button class="sw" role="switch" aria-checked="true" aria-label="Add new videos to timeline"><span></span></button> → <span class="v">Selects / Footage</span><button class="qbtn" style="margin-left: auto">Change…</button></div>
+  <div class="tools">
+    <input class="tf" type="text" aria-label="Search links" placeholder="Search bin or folder">
+    <button class="ibtn" style="margin-left: auto" aria-label="More: ignored files and folders (3)"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+    <button class="btn cta">+ Add link</button>
+  </div>
+  <div class="body">
+    <div class="wrap">
+      <div class="table">
+        <div class="tr th"><span>BIN ↔ FOLDER</span><span>OPTIONS</span><span>STATE</span><span></span></div>
+        <div class="tr sel">
+          <div class="bf"><strong>Footage/Video</strong><div class="p">D:/Shoots/Expedition_S02</div></div>
+          <div class="tags"><span class="tag">Subfolders</span><span class="tag x">2 folders excluded</span></div>
+          <div class="st"><span class="d" style="background: #6fd3a0"></span>Active<span class="m">· 29 pending</span></div>
+          <button class="more on" aria-label="Actions for Footage/Video" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="8" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="13" cy="8" r="1.4" fill="#e0e0e4"></circle></svg></button>
+        </div>
+        <div class="tr">
+          <div class="bf"><strong>Footage/Audio</strong><div class="p">D:/Shoots/Expedition_S02_Sound/Recorders/ZoomF8</div></div>
+          <div class="tags"><span class="tag">Subfolders</span></div>
+          <div class="st"><span class="d" style="background: #6fd3a0"></span>Active<span class="m">· up to date</span></div>
+          <button class="more" aria-label="Actions for Footage/Audio"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+        </div>
+        <div class="tr">
+          <div class="bf"><strong>Graphics</strong><div class="p">../02_Assets/Graphics</div></div>
+          <div class="tags"><span class="tag">Subfolders</span><span class="tag">Relative</span></div>
+          <div class="st"><span class="d" style="background: #8a8a90"></span>Paused<button class="qbtn">Resume</button></div>
+          <button class="more" aria-label="Actions for Graphics"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+        </div>
+        <div class="tr bad">
+          <div class="bf"><strong>Footage/Drone</strong><div class="p">E:/Drone_SSD/DCIM</div></div>
+          <div class="tags"><span class="tag">Subfolders</span></div>
+          <div class="st" style="color: #ffb0b0"><span class="d" style="background: #ff8b8b"></span>Unavailable<button class="qbtn">Reconnect…</button></div>
+          <button class="more" aria-label="Actions for Footage/Drone"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="hint">Saved automatically</span>
+    <button class="btn sec">Close</button>
+  </div>
+</div>
+</body>
+</html>

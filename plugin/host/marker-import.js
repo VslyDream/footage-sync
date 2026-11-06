@@ -11,7 +11,7 @@ async function apply(project,item,source,mode="append",expected) {
   if(!clip||await clip.isSequence()||await clip.isOffline())throw new Error("Choose online source footage for clip markers.");
   const owner=await clip.getProject();if(P.key(owner.path)!==projectPath||String(owner.guid)!==projectId)throw new Error("Source clip belongs to another project.");
   const collection=await ppro.Markers.getMarkers(clip),current=(await State.read(item)).ledger;
-  const guard=async()=>{const active=await ppro.Project.getActiveProject();if(!active||P.key(active.path)!==projectPath||String(active.guid)!==projectId)throw new Error("The active project changed before importing clip markers.");};
+  const guard=async()=>{const live=await ppro.Project.getProject(project.guid);if(!live||P.key(live.path)!==projectPath||String(live.guid)!==projectId)throw new Error("The source project changed before importing clip markers.");};
   const descriptor=m=>Markers.describe(m),snapshot=()=>collection.getMarkers().map(descriptor);
   if(expected&&stamp(snapshot())!==expected)throw new Error("Clip markers changed after review. Review them again.");
   const record={sourceKey:P.key(source.path),signature:source.signature,revision:source.revision||0,skipped:mode==="skip"};

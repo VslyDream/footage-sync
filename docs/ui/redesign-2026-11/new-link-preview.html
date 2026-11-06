@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — New link preview</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.top{flex:none;padding:14px 20px 12px;border-bottom:1px solid #36363a}
+.eb{font-size:10px;font-weight:700;letter-spacing:.07em;color:#8fb8e8;margin-bottom:4px}
+.title{font-size:18px;font-weight:400;margin:0;color:#f0f0f2}
+.title span{color:#8f8f96}
+.sub{color:#a5a5aa;font-size:12px;margin-top:3px}
+.body{flex:1;min-height:0;padding:12px 20px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.sh{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b0b0b6;margin-bottom:6px}
+.sh .r{text-transform:none;letter-spacing:0;font-weight:400;color:#9a9aa0}
+.cnt{display:inline-block;min-width:20px;text-align:center;padding:1px 7px;border-radius:9px;background:#333338;color:#e0e0e4;font-size:11px;font-weight:700;letter-spacing:0}
+.cnt.amb{background:#5a4320;color:#ffd68f}
+.dot{width:8px;height:8px;border-radius:50%;background:#e0a145;display:inline-block;flex:none}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22;position:relative}
+.drow{display:flex;align-items:center;gap:12px;padding:6px 10px 6px 12px;min-height:44px}
+.mark{width:14px;flex:none;display:flex;justify-content:center}
+.dt{flex:1;min-width:0}
+.dt strong{display:block;font-weight:600}
+.m2{color:#9a9aa0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;border:1px solid #55555a;border-radius:4px;overflow:hidden;flex:none}
+.seg button{background:#2b2b2f;color:#ddd;border:0;border-right:1px solid #55555a;padding:5px 10px;font:inherit;font-size:12px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#1473e6;color:#fff}
+.seg.sm button{padding:2px 8px;font-size:11px}
+.seg.sm button.on{background:#3d4a5c}
+.exp{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:#9ccaff;font:inherit;font-size:11.5px;padding:2px 0;flex:none}
+.fr{display:flex;align-items:center;gap:8px;height:30px;padding:0 8px 0 12px;border-bottom:1px solid #2f2f33}
+.fr:last-child{border-bottom:0}
+.fr .nm{font-weight:600;flex:none}
+.fr .d{color:#9a9aa0;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.fr.sub .nm{font-weight:400}
+.fr.off .nm{color:#85858b}
+.fr.hl{background:#2a2a30}
+.tw{width:12px;flex:none;display:inline-flex}
+.tag{flex:none;font-size:10px;padding:1px 6px;border-radius:3px;background:#28323f;color:#a9c9ef}
+.tag.x{background:#33302a;color:#d9c49b}
+.tag.w{background:#3a2f1c;color:#e9c27f}
+.heavy{color:#e3bd7c}
+.more{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;border-radius:4px;flex:none;padding:0}
+.more.on{background:#3a3a40}
+.menu{position:absolute;right:8px;top:134px;width:250px;background:#2e2e33;border:1px solid #55555b;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0;z-index:2}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:7px 12px}
+.menu button.hov{background:#1473e6;color:#fff}
+.menu .k{display:block;font-size:11px;color:#dbe9ff}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12px;padding:2px 4px}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 850px; height: 650px">
+  <div class="os"><span>New link</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="top">
+    <div class="eb">NEW LINK · PREVIEW</div>
+    <h1 class="title">Footage/Video <span>↔</span> D:/Shoots/Expedition_S02</h1>
+    <div class="sub">82 files already in the project are reused, nothing is duplicated. Nothing changes until you confirm.</div>
+  </div>
+  <div class="body">
+    <section>
+      <div class="sh"><span class="dot" aria-hidden="true"></span>Needs you<span class="cnt amb">2</span></div>
+      <div class="box">
+        <div class="drow">
+          <span class="mark" aria-hidden="true"><span class="dot"></span></span>
+          <div class="dt"><strong>2 fragmented MP4</strong><div class="m2">B002_C008_1103QF.mp4 in CamB, IMG_4471.mp4 in Phone</div></div>
+          <button class="exp" aria-expanded="false"><svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#9ccaff" stroke-width="1.6"></path></svg>Per file</button>
+          <div class="seg" role="group" aria-label="Decision"><button aria-pressed="false">Import originals</button><button aria-pressed="false">Skip this time</button></div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="sh">Ready to apply<span class="cnt">47</span><span class="r" style="margin-left: auto">Group by</span><div class="seg sm" role="group" aria-label="Group by"><button aria-pressed="false">Type</button><button class="on" aria-pressed="true">Folder</button></div><button class="qbtn" style="margin-left: 8px">Select none</button></div>
+      <div class="box">
+        <div class="fr"><span class="tw"></span><svg width="14" height="14" viewBox="0 0 14 14" aria-label="Already in project"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="#6fd3a0" stroke-width="1.8"></path></svg><span class="nm">2026-11-01</span><span class="d">already in the project · 42 files reused</span></div>
+        <div class="fr"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="2026-11-02"><span class="nm">2026-11-02</span><span class="d">40 reused · 2 renamed and 1 moved will be relinked</span></div>
+        <div class="fr"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="2026-11-03"><span class="nm">2026-11-03</span><span class="tag">new bin</span><span class="d">22 files · 127 GB</span></div>
+        <div class="fr sub" style="padding-left: 52px"><input type="checkbox" checked aria-label="CamA"><span class="nm">CamA</span><span class="d">9 · A003_C001_1103XK.mp4, A003_C002_1103XK.mp4, +7</span><span class="tag w">1 TXT skipped</span><button class="more" aria-label="Actions for CamA"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="8" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="13" cy="8" r="1.4" fill="#8a8a90"></circle></svg></button></div>
+        <div class="fr sub" style="padding-left: 52px"><input type="checkbox" checked aria-label="CamB"><span class="nm">CamB</span><span class="d">8 · B002_C001_1103QF.mp4, B002_C002_1103QF.mp4, +6</span><button class="more" aria-label="Actions for CamB"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="8" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="13" cy="8" r="1.4" fill="#8a8a90"></circle></svg></button></div>
+        <div class="fr sub" style="padding-left: 52px"><input type="checkbox" checked aria-label="Phone"><span class="nm">Phone</span><span class="d">1 · IMG_4471.mp4 — waits for your decision above</span><button class="more" aria-label="Actions for Phone"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="8" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="13" cy="8" r="1.4" fill="#8a8a90"></circle></svg></button></div>
+        <div class="fr sub" style="padding-left: 52px"><input type="checkbox" checked aria-label="Sound"><span class="nm">Sound</span><span class="d">4 · ZOOM0001_Tr1.wav, ZOOM0002_Tr1.wav, +2</span><button class="more" aria-label="Actions for Sound"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="8" cy="8" r="1.4" fill="#8a8a90"></circle><circle cx="13" cy="8" r="1.4" fill="#8a8a90"></circle></svg></button></div>
+        <div class="fr sub off" style="padding-left: 52px"><input type="checkbox" aria-label="_proxy"><span class="nm">_proxy</span><span class="tag x">excluded</span><span class="d">214 files · 96 GB</span></div>
+        <div class="fr hl"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="_renders"><span class="nm">_renders</span><span class="tag">new bin</span><span class="d">18 files · <span class="heavy">640 GB</span></span><button class="more on" aria-label="Actions for _renders" aria-expanded="true"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="8" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="13" cy="8" r="1.4" fill="#e0e0e4"></circle></svg></button></div>
+        <div class="fr"><span class="tw"></span><input type="checkbox" checked aria-label="Add new videos to timeline"><span class="nm">Add new videos to timeline</span><span class="d">16 · Selects / Footage · V1 + date title on V2</span></div>
+        <div class="menu" role="menu" aria-label="Actions for _renders">
+          <button role="menuitem" class="hov">Exclude this folder<span class="k">Not synced; nothing in Premiere is touched</span></button>
+          <button role="menuitem">Show all 18 files</button>
+          <button role="menuitem">Ignore a file…</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="foot">
+    <span class="hint">2 files wait for your decision</span>
+    <button class="btn sec">Cancel</button>
+    <button class="btn cta">Link and apply 47 changes</button>
+  </div>
+</div>
+</body>
+</html>

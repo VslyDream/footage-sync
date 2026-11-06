@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Changes tab — Sync running</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.hdr{flex:none;display:flex;align-items:center;height:46px;background:#29292d;border-bottom:1px solid #3a3a3e;padding:0 10px 0 16px}
+.brand{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#203b49;border:1px solid #3983a4;border-radius:4px;color:#8ed8f8;font-size:10px;margin-right:18px}
+.tab{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px;color:#a0a0a6;background:none;border:0;border-bottom:2px solid transparent;font:inherit;font-size:14px}
+.tab.on{color:#fff;border-bottom-color:#3088f1}
+.wmore{margin-left:auto;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:#3a3a40;padding:0}
+.strip{flex:none;display:flex;align-items:center;gap:6px;padding:8px 20px;border-bottom:1px solid #36363a;font-size:12px;color:#8f8f96}
+.strip .v{color:#c4c4c9}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12px;padding:2px 4px}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:14px 20px;overflow:hidden}
+.sh{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b0b0b6;margin-bottom:6px}
+.sh .r{text-transform:none;letter-spacing:0;font-weight:400;color:#9a9aa0}
+.cnt{display:inline-block;min-width:20px;text-align:center;padding:1px 7px;border-radius:9px;background:#333338;color:#e0e0e4;font-size:11px;font-weight:700;letter-spacing:0}
+.cnt.amb{background:#5a4320;color:#ffd68f}
+.dot{width:8px;height:8px;border-radius:50%;background:#e0a145;display:inline-block;flex:none}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22;overflow:hidden}
+.drow{display:flex;align-items:center;gap:12px;padding:6px 10px 6px 12px;border-bottom:1px solid #333337;min-height:46px}
+.drow:last-child{border-bottom:0}
+.mark{width:14px;flex:none;display:flex;justify-content:center}
+.dt{flex:1;min-width:0}
+.dt strong{display:block;font-weight:600}
+.m2{color:#9a9aa0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m2.warn{color:#e3bd7c}
+.seg{display:inline-flex;border:1px solid #55555a;border-radius:4px;overflow:hidden;flex:none}
+.seg button{background:#2b2b2f;color:#ddd;border:0;border-right:1px solid #55555a;padding:5px 10px;font:inherit;font-size:12px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#1473e6;color:#fff}
+.seg.sm button{padding:2px 8px;font-size:11px}
+.seg.sm button.on{background:#3d4a5c;color:#fff}
+.small{height:26px;padding:0 12px;border-radius:13px;font:inherit;font-size:12px;font-weight:600;background:transparent;border:1px solid #6a6a70;color:#d0d0d4;flex:none}
+.exp{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:#9ccaff;font:inherit;font-size:11.5px;padding:2px 0;flex:none}
+.grow{display:flex;align-items:center;gap:10px;padding:0 12px;height:34px;border-bottom:1px solid #333337}
+.grow:last-child{border-bottom:0}
+.tg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:#e8e8e8;font:inherit;padding:0}
+.gt{font-weight:600}
+.gd{margin-left:auto;display:flex;align-items:center;gap:8px;color:#9a9aa0;font-size:11px;white-space:nowrap}
+.chip{flex:none;font-size:10px;padding:1px 6px;border-radius:3px;background:#3a2f1c;color:#e9c27f}
+.note{display:flex;align-items:center;gap:8px;color:#9a9aa0;font-size:11.5px;padding:8px 2px 0}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.menu{position:absolute;right:10px;top:72px;width:290px;background:#2e2e33;border:1px solid #55555b;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0;z-index:2}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:7px 12px}
+.menu button.hov{background:#1473e6;color:#fff}
+.menu .k{display:block;font-size:11px;color:#9a9aa0}
+.menu button.hov .k{color:#dbe9ff}
+.menu hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:6px}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.wmore{background:transparent}
+.proc{border:1px solid #2f4a6b;background:#1b2330;border-radius:6px;padding:14px 16px}
+.ph{display:flex;align-items:center;gap:10px}
+.ph strong{font-size:15px;font-weight:600}
+.ph .el{margin-left:auto;color:#a9b4c2;font-size:12px}
+.cur{margin-top:10px;font-size:12.5px;display:flex;gap:8px;align-items:baseline;min-width:0}
+.cur b{font-weight:600}
+.cur span{color:#8f8f96;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:6px;background:#2b2f37;border-radius:3px;margin:10px 0 5px;overflow:hidden}
+.bar span{display:block;height:100%;width:60%;background:#3088f1}
+.bm{display:flex;color:#a9b4c2;font-size:11.5px}
+.bm span:last-child{margin-left:auto}
+.steps{margin-top:14px;display:grid;grid-template-columns:16px minmax(0,1fr) auto;row-gap:7px;column-gap:8px;font-size:12.5px;align-items:center}
+.steps .x{color:#9a9aa0;font-size:11.5px;text-align:right}
+.steps .now{color:#cfe4ff;font-weight:600}
+.steps .todo{color:#7d7d84}
+.pw{margin-top:14px;border-top:1px solid #2f3a48;padding-top:10px;font-size:12px;color:#e3bd7c}
+.pw span{color:#9a9aa0}
+.wait{display:flex;align-items:center;gap:10px;padding:0 12px;height:38px;color:#b0b0b6;font-size:12.5px}
+.wait .r{margin-left:auto;color:#8f8f96;font-size:11.5px}
+.btn[disabled]{background:#2a3a52;border-color:#2a3a52;color:#a9b9cf}
+
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 1040px; height: 700px">
+  <div class="os"><span>Footage Sync</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="hdr">
+    <span class="brand" aria-hidden="true">FS</span>
+    <button class="tab on" aria-current="page"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="#3a4d66" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="#8ec5ff" stroke-width="2" stroke-linecap="round"></path></svg>Changes<span class="cnt amb">4</span></button>
+    <button class="tab">History</button>
+    <button class="tab">Links</button>
+    <button class="tab">Settings</button>
+    <button class="wmore" aria-label="More"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="8" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="13" cy="8" r="1.4" fill="#e0e0e4"></circle></svg></button>
+  </div>
+  <div class="strip" role="status">Into <span class="v">Expedition_S02_Footage.prproj</span> → <span class="v">Selects / Footage</span> · sync started 18:41<button class="qbtn" style="margin-left: auto; color: #6f7f94" disabled>Check now</button></div>
+  <div class="main">
+    <div class="proc" role="status" aria-live="polite">
+      <div class="ph"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="#3a4d66" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="#8ec5ff" stroke-width="2" stroke-linecap="round"></path></svg><strong>Applying 28 changes · Importing files</strong><span class="el">0:41 elapsed</span></div>
+      <div class="cur"><b>A003_C006_1103XK.mp4</b><span>D:/Shoots/Expedition_S02/2026-11-03/CamA/</span></div>
+      <div class="bar" role="progressbar" aria-valuenow="12" aria-valuemin="0" aria-valuemax="19" aria-label="Importing files"><span></span></div>
+      <div class="bm"><span>12 of 19 files</span><span>Closing this window does not stop Sync</span></div>
+      <div class="steps">
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#5fd08f" stroke-width="1.8"></path></svg><span>Reading project</span><span class="x">0.4 s</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#5fd08f" stroke-width="1.8"></path></svg><span>Scanning folders</span><span class="x">5.2 s</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#5fd08f" stroke-width="1.8"></path></svg><span>Comparing disk and Premiere</span><span class="x">1.1 s</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#5fd08f" stroke-width="1.8"></path></svg><span>Creating bins, renaming and moving</span><span class="x">8 done · 3.0 s</span>
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="#3a4d66" stroke-width="2"></circle><path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="#8ec5ff" stroke-width="2" stroke-linecap="round"></path></svg><span class="now">Importing files</span><span class="x">12 / 19</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="#5a5a60" stroke-width="1.4"></circle></svg><span class="todo">Adding to the timeline</span><span class="x">15 videos</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="#5a5a60" stroke-width="1.4"></circle></svg><span class="todo">Clip markers</span><span class="x">1 TXT</span>
+      </div>
+      <div class="pw">1 warning so far: A003_C004_1103XK.txt · line 4 — TXT skipped<span>, the video imports.</span></div>
+    </div>
+    <section>
+      <div class="sh"><span class="dot" aria-hidden="true"></span>Needs you<span class="cnt amb">4</span><span class="r" style="margin-left: auto">not part of this run · available when Sync finishes</span></div>
+      <div class="box"><div class="wait">2 fragmented MP4 · 1 marker TXT · 1 conflict<span class="r">your choices so far are kept</span></div></div>
+    </section>
+  </div>
+  <div class="foot">
+    <span class="hint">Sync, Check now and Add markers are unavailable until this run ends</span>
+    <button class="btn sec">Close</button>
+    <button class="btn cta" disabled>Applying…</button>
+  </div>
+</div>
+</body>
+</html>

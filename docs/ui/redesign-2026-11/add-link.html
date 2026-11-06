@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Add link</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.body{flex:1;min-height:0;padding:18px 22px;overflow:hidden;display:flex;flex-direction:column;gap:16px;position:relative}
+.step{display:flex;align-items:center;gap:8px;font-weight:600;color:#ececf0;margin-bottom:8px}
+.num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#2f3e52;color:#bcd8ff;font-size:11px;font-weight:700}
+.frow{display:flex;align-items:center;gap:8px}
+.tf{flex:1;height:32px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:14px}
+.m{color:#9a9aa0;font-size:11.5px;margin-top:6px}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22}
+.opt{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;padding:10px 12px;border-bottom:1px solid #333337}
+.opt:last-child{border-bottom:0}
+.opt.sel{background:#212c3b}
+.ol{display:flex;align-items:center;gap:8px}
+.res{grid-column:2;display:flex;align-items:center;gap:8px;margin-top:6px;color:#9a9aa0;font-size:11.5px}
+.res b{color:#c9c9ce;font-weight:600}
+.pick{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;background:#2b2b2f;border:1px solid #55555a;border-radius:4px;color:#e2e2e6;font:inherit;font-size:12px}
+.pick.open{border-color:#4b9cf5}
+.ok{font-size:11px;color:#8fe0b5;background:#203229;border-radius:3px;padding:1px 7px}
+.dd{position:absolute;left:192px;top:184px;width:250px;background:#2e2e33;border:1px solid #55555b;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0;z-index:2}
+.tri{display:flex;align-items:center;height:28px;padding-right:12px}
+.tri.on{background:#1473e6}
+.tw{width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;padding:0;margin-left:4px;border-radius:3px}
+.lb{flex:1;min-width:0;height:28px;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:0 4px}
+.tri.on .lb{color:#fff}
+.dd .ck{margin-left:auto;color:#fff}
+.dd hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.dd .tip{border-top:1px solid #45454a;margin-top:4px;padding:6px 12px 3px;color:#8f8f96;font-size:11px}
+.cko{display:inline-flex;align-items:center;gap:8px;margin-right:22px;color:#d6d6d6}
+.cko .m{margin:0 0 0 2px}
+input[type=radio]{accent-color:#4b9cf5;width:14px;height:14px;margin:2px 0 0;flex:none}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600;flex:none}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 760px; height: 560px">
+  <div class="os"><span>Add link</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="body">
+    <section>
+      <div class="step"><span class="num">1</span>Folder on disk</div>
+      <div class="frow"><input class="tf" type="text" aria-label="Folder on disk" value="D:/Shoots/Expedition_S02"><button class="btn sec">Browse…</button></div>
+      <div class="m">3 subfolders: 2026-11-01, 2026-11-02, 2026-11-03 · 104 media files</div>
+    </section>
+    <section>
+      <div class="step"><span class="num">2</span>Where in Premiere</div>
+      <div class="box" role="radiogroup" aria-label="Destination">
+        <label class="opt sel">
+          <input type="radio" name="dest" checked>
+          <span class="ol">Into an existing bin<button class="pick open" aria-haspopup="listbox" aria-expanded="true">Footage/Video ▾</button></span>
+          <span class="res">Files land in <b>Footage/Video/2026-11-03/CamA/…</b><span class="ok">2 of 3 day bins already exist</span></span>
+        </label>
+        <label class="opt">
+          <input type="radio" name="dest">
+          <span class="ol">Into a new bin “Expedition_S02”, inside<button class="pick" aria-haspopup="listbox">Footage ▾</button></span>
+          <span class="res">Files land in <b>Footage/Expedition_S02/2026-11-03/CamA/…</b></span>
+        </label>
+      </div>
+    </section>
+    <section>
+      <div class="step"><span class="num">3</span>Options</div>
+      <label class="cko"><input type="checkbox" checked>Include subfolders</label>
+      <label class="cko"><input type="checkbox">Path relative to the project<span class="m">for project templates</span></label>
+    </section>
+    <div class="dd" role="tree" aria-label="Premiere bin">
+      <div class="tri" role="treeitem"><span class="tw"></span><button class="lb">Project root</button></div>
+      <hr>
+      <div class="tri" role="treeitem" aria-expanded="true"><button class="tw" aria-label="Collapse Footage"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></button><button class="lb">Footage</button></div>
+      <div class="tri on" role="treeitem" aria-expanded="false" aria-selected="true" style="padding-left: 18px"><button class="tw" aria-label="Expand Video"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#dbe9ff" stroke-width="1.6"></path></svg></button><button class="lb">Video</button><span class="ck">✓</span></div>
+      <div class="tri" role="treeitem" aria-expanded="false" style="padding-left: 18px"><button class="tw" aria-label="Expand Audio"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></button><button class="lb">Audio</button></div>
+      <div class="tri" role="treeitem" aria-expanded="false"><button class="tw" aria-label="Expand Graphics"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></button><button class="lb">Graphics</button></div>
+      <div class="tri" role="treeitem"><span class="tw"></span><button class="lb">Sequences</button></div>
+      <div class="tip">Arrow opens a bin · name selects it</div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="hint">Nothing changes in Premiere until you confirm the preview</span>
+    <button class="btn sec">Cancel</button>
+    <button class="btn cta">Preview link</button>
+  </div>
+</div>
+</body>
+</html>

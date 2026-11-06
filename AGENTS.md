@@ -9,7 +9,7 @@ Before substantial work:
 2. Read `STATE.md`.
 3. Treat `SPEC.md` as the canonical product contract.
 4. Treat `STATE.md` as the current development snapshot.
-5. For UI work, also read `docs/UI_SPEC.md` and only the screenshots referenced by the screen(s) in scope.
+5. For UI work, also read `docs/UI_SPEC.md` and only the screenshots referenced by the screen(s) in scope (for the 2026-11 redesign: the PNG and, when exact copy or structure matters, the same-named HTML in `docs/ui/redesign-2026-11/`).
 
 ---
 
@@ -23,7 +23,7 @@ Before substantial work:
 
 - user flows;
 - экраны и основные UI controls;
-- поведение AUTO / ASK / MANUAL;
+- поведение режимов Sync (`When I press Sync` / `Automatically`; ранее AUTO / ASK / MANUAL);
 - правила синхронизации disk ↔ Premiere;
 - rename / move / delete behavior;
 - duplicate behavior;
@@ -154,9 +154,10 @@ STATE — не diary и не changelog.
 
 Canonical screen contract for approved UI structure, controls, states and transitions.
 
-- Treat screenshots in `docs/ui/` as golden visual references only when `docs/UI_SPEC.md` links them.
+- Treat screenshots in `docs/ui/` as golden visual references only when `docs/UI_SPEC.md` links them as current target. Current target images are in `docs/ui/redesign-2026-11/`; files directly in `docs/ui/` show the pre-redesign UI.
+- A same-named `.html` next to a redesign PNG is the static source the PNG was rendered from: read it for exact copy and structure, not as production code.
 - Load only the screen images relevant to the current task.
-- Treat the interactive prototype in `prototype/` as a secondary behavior/review reference.
+- Treat the interactive prototype in `prototype/` as a secondary behavior/review reference; it predates the 2026-11 redesign.
 - Do not load prototype source merely to understand the approved UI; inspect it only when implementing or resolving an ambiguity.
 - Product behavior remains canonical in `SPEC.md`; avoid duplicating or overriding it in UI documentation.
 
@@ -179,6 +180,8 @@ Canonical screen contract for approved UI structure, controls, states and transi
 ---
 
 ## 5. Before finishing a task
+
+[LOCKED — user instruction 2026-10-15] Здесь и дальше после изменений runtime сразу устанавливай текущую сборку в локальный Premiere через `scripts/install-dev.ps1`, затем сверяй установленные файлы с исходниками. Отдельное подтверждение установки не требуется. Соблюдай защиту installer: не перезаписывай плагин при работающем Premiere и не завершай Premiere принудительно с риском потери несохранённых изменений. Установку и native host acceptance отмечай отдельно.
 
 Перед завершением meaningful task:
 

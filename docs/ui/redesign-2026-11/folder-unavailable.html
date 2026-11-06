@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Folder Unavailable</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.body{flex:1;min-height:0;padding:18px 22px;overflow:hidden;display:flex;flex-direction:column;gap:16px;position:relative}
+.step{display:flex;align-items:center;gap:8px;font-weight:600;color:#ececf0;margin-bottom:8px}
+.num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#2f3e52;color:#bcd8ff;font-size:11px;font-weight:700}
+.frow{display:flex;align-items:center;gap:8px}
+.tf{flex:1;height:32px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:14px}
+.m{color:#9a9aa0;font-size:11.5px;margin-top:6px}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22}
+.opt{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;padding:10px 12px;border-bottom:1px solid #333337}
+.opt:last-child{border-bottom:0}
+.opt.sel{background:#212c3b}
+.ol{display:flex;align-items:center;gap:8px}
+.res{grid-column:2;display:flex;align-items:center;gap:8px;margin-top:6px;color:#9a9aa0;font-size:11.5px}
+.res b{color:#c9c9ce;font-weight:600}
+.pick{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;background:#2b2b2f;border:1px solid #55555a;border-radius:4px;color:#e2e2e6;font:inherit;font-size:12px}
+.pick.open{border-color:#4b9cf5}
+.ok{font-size:11px;color:#8fe0b5;background:#203229;border-radius:3px;padding:1px 7px}
+.dd{display:none}
+.dd button{display:flex;align-items:center;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:6px 12px}
+.dd button.on{background:#1473e6;color:#fff}
+.dd hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.dd .ck{margin-left:auto}
+.cko{display:inline-flex;align-items:center;gap:8px;margin-right:22px;color:#d6d6d6}
+.cko .m{margin:0 0 0 2px}
+input[type=radio]{accent-color:#4b9cf5;width:14px;height:14px;margin:2px 0 0;flex:none}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600;flex:none}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.body{gap:14px}
+.ttl{display:flex;align-items:center;gap:10px;font-size:17px;color:#f0f0f2}
+.rd{width:9px;height:9px;border-radius:50%;background:#ff6b6b;flex:none}
+.ttl span.a{color:#8f8f96}
+.lead{color:#c9c9ce;font-size:12.5px;line-height:1.5;margin:0}
+.grid{display:grid;grid-template-columns:130px minmax(0,1fr);row-gap:9px;column-gap:12px;font-size:12.5px;padding:12px 14px}
+.grid .k{color:#8f8f96}
+.grid .ok{color:#8fe0b5}
+.quiet{background:none;border:0;color:#c9c9ce;font:inherit;font-size:13px;padding:0 6px;margin-right:auto;text-decoration:underline;text-underline-offset:3px}
+
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 640px; height: 440px">
+  <div class="os"><span>Folder unavailable</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="body">
+    <div class="ttl"><span class="rd" aria-hidden="true"></span>Footage/Drone <span class="a">↔</span> E:/Drone_SSD/DCIM</div>
+    <p class="lead">The folder can't be reached — the drive may be disconnected or renamed. This link is paused. Nothing was removed from Premiere, and other links keep syncing.</p>
+    <div class="box grid">
+      <span class="k">Premiere bin</span><span>Footage/Drone · <span class="ok">64 items, unchanged</span></span>
+      <span class="k">System folder</span><span>E:/Drone_SSD/DCIM</span>
+      <span class="k">Last available</span><span>today 14:05</span>
+      <span class="k">Pending</span><span>nothing from this link is applied while it is paused</span>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="quiet">Pause link</button>
+    <button class="btn sec">Close</button>
+    <button class="btn cta">Choose folder…</button>
+  </div>
+</div>
+</body>
+</html>

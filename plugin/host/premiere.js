@@ -1,12 +1,32 @@
 "use strict";
 const ppro = require("premierepro");
 const P = require("../core/paths");
+const staleReference=error=>/null\s*(?:ptr|pointer)|invalid(?:ated)?\s+(?:native\s+)?(?:object|reference)|project (?:was |is )?closed/i.test(String(error?.message||error));
+async function openProjects() {
+  const projects=new Map();
+  // Closed views must not hide a healthy saved project in another view.
+  const add=project=>{if(project?.path){String(project.guid);projects.set(P.key(project.path),project);}};
+  let views=[];
+  try{views=await ppro.ProjectUtils.getProjectViewIds();}catch(e){if(!staleReference(e))throw e;}
+  for(const view of views) {
+    try{add(await ppro.ProjectUtils.getProjectFromViewId(view));}catch(e){if(!staleReference(e))throw e;}
+  }
+  try{add(await ppro.Project.getActiveProject());}catch(e){if(!staleReference(e))throw e;}
+  return [...projects.values()];
+}
+async function resolveProject(binding,label="import") {
+  if(!binding?.path)return null;
+  const matches=(await openProjects()).filter(p=>P.key(p.path)===P.key(binding.path));
+  if(matches.length!==1)throw new Error("Open the selected "+label+" project: "+binding.path+". No other project will be used.");
+  return matches[0];
+}
 function folder(item) { try { return ppro.FolderItem.cast(item); } catch (_) { return null; } }
 function clip(item) { try { return ppro.ClipProjectItem.cast(item); } catch (_) { return null; } }
-async function inventory(project) {
+async function inventory(project,onProgress) {
   const root = await project.getRootItem(), bins=[], clips=[], handles=new Map();
   async function walk(parent,parentPath) {
     for(const item of await parent.getItems()) {
+      onProgress?.({current:P.join(parentPath,String(item.name)),completed:bins.length+clips.length});
       const id=String(await item.getId()), name=String(item.name); handles.set(id,item);
       const bin=folder(item);
       if(bin) { const path=P.join(parentPath,name); bins.push({id,name,path,parentPath}); await walk(bin,path); }
@@ -35,7 +55,7 @@ async function ensureBin(project,path) {
   }
   return parent;
 }
-async function applyChange(project,change,inv) {
+async function applyChange(project,change,inv,onProgress) {
   if(change.kind==="new-folder") { await ensureBin(project,change.path); return; }
   if(change.kind==="folder-move") {
     const base=inv.handles.get(change.itemId), item=folder(base); if(!item) throw new Error("Managed bin disappeared.");
@@ -47,12 +67,15 @@ async function applyChange(project,change,inv) {
   }
   const target=await ensureBin(project,change.target);
   if(change.kind==="new-file" || change.kind==="fragmented") {
+    onProgress?.("Checking for existing media",change.path);
     const fresh=await inventory(project);
     if(fresh.clips.some(c=>P.key(c.mediaPath)===P.key(change.path))) throw new Error("Source was imported after analysis. Scan again to reconcile it.");
+    onProgress?.("Importing media",change.path);
     if(!await project.importFiles([change.path],true,target,false)) throw new Error("Premiere could not import " + change.path);
+    onProgress?.("Verifying import",change.path);
     const after=await inventory(project);
     if(after.clips.filter(c=>P.key(c.mediaPath)===P.key(change.path)).length!==1) throw new Error("Import result could not be verified.");
-    return;
+    return after;
   }
   const item=inv.handles.get(change.itemId); if(!item) throw new Error("Project Item disappeared.");
   const media=clip(item);
@@ -65,4 +88,4 @@ async function applyChange(project,change,inv) {
   const source=await item.getParentBin();
   if(String(ppro.ProjectItem.cast(source).getId())!==String(ppro.ProjectItem.cast(target).getId())) transact(project,"Footage Sync: reconcile item",()=>source.createMoveItemAction(item,target));
 }
-module.exports={ppro,inventory,ensureBin,applyChange};
+module.exports={ppro,inventory,ensureBin,applyChange,openProjects,resolveProject};

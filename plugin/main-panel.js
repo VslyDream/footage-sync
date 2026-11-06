@@ -63,10 +63,12 @@ class MainPanel {
     const warnings=controller.batch?.warnings?.length||0;
     const attention=Boolean(controller.error||controller.batch?.hasBlocking||warnings||unavailable);
     this.count=n; this.busy=Boolean(controller.busy);
-    this.sync.disabled=this.busy||unavailable;
+    // While busy the same action opens progress; UI.sync guards against a second run.
+    this.sync.disabled=!this.busy&&unavailable;
     this.sync.className="main-action"+(this.sync.disabled?" disabled":"")+(this.busy?" working":"");
     this.sync.setAttribute("aria-disabled",String(this.sync.disabled));
-    this.sync.setAttribute("title",this.busy?"Sync — scanning / syncing…":unavailable?"Sync unavailable — open Status to reconnect the source":"Sync — scan and sync this project");
+    this.sync.setAttribute("title",this.busy?"Sync in progress — click for details":unavailable?"Sync unavailable — open Status to reconnect the source":"Sync — scan and sync this project");
+    this.sync.setAttribute("aria-label",this.busy?"View sync progress":"Sync");
     this.status.className="main-action"+(attention?" needs-attention":"");
     this.status.setAttribute("title",`Status — ${n} pending changes${attention?" · Needs attention":""}${warnings?` · ${warnings} warnings`:""}`);
     this.badge.textContent=String(n); this.badge.style.display=n?"block":"none";

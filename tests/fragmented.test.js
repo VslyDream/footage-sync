@@ -16,7 +16,7 @@ function scannerAPI(noIdentity=false){
     close:fd=>fd.close()
   };
   const filename=path.resolve("plugin/host/filesystem.js"),mod={exports:{}};
-  vm.runInThisContext("(function(require,module,exports){"+require("node:fs").readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="fs"?uxpFs:require(path.resolve("plugin/host",id)),mod,mod.exports);
+  vm.runInThisContext("(function(require,module,exports){"+require("node:fs").readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="./io"?uxpFs:require(path.resolve("plugin/host",id)),mod,mod.exports);
   return mod.exports;
 }
 function box(type,payload=Buffer.alloc(0)){const header=Buffer.alloc(8);header.writeUInt32BE(8+payload.length);header.write(type,4,"ascii");return Buffer.concat([header,payload]);}

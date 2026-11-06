@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Settings tab</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.hdr{flex:none;display:flex;align-items:center;height:46px;background:#29292d;border-bottom:1px solid #3a3a3e;padding:0 16px}
+.brand{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#203b49;border:1px solid #3983a4;border-radius:4px;color:#8ed8f8;font-size:10px;margin-right:18px}
+.tab{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px;color:#a0a0a6;background:none;border:0;border-bottom:2px solid transparent;font:inherit;font-size:14px}
+.tab.on{color:#fff;border-bottom-color:#3088f1}
+.cnt{display:inline-block;min-width:20px;text-align:center;padding:1px 7px;border-radius:9px;background:#5a4320;color:#ffd68f;font-size:11px;font-weight:700}
+.body{flex:1;min-height:0;padding:6px 24px;overflow:hidden}
+.fr{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px;padding:16px 0;border-bottom:1px solid #333337}
+.fr:last-child{border-bottom:0}
+.fl{font-weight:600;color:#ececf0;padding-top:1px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.op{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;align-items:start}
+.op .t{color:#e8e8e8}
+.op .d{grid-column:2;color:#9a9aa0;font-size:11.5px;margin-top:1px}
+.op.off .t{color:#7c7c82}
+.op.off .d{color:#6f6f75}
+input[type=radio],input[type=checkbox]{accent-color:#4b9cf5;width:14px;height:14px;margin:2px 0 0}
+input[type=checkbox]{accent-color:#c8c8c8}
+.rec{font-size:10.5px;color:#a9c9ef;background:#28323f;border-radius:3px;padding:1px 6px;margin-left:6px}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 850px; height: 600px">
+  <div class="os"><span>Footage Sync</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="hdr">
+    <span class="brand" aria-hidden="true">FS</span>
+    <button class="tab">Changes<span class="cnt" style="background: #5a4320; color: #ffd68f">4</span></button>
+    <button class="tab">History</button>
+    <button class="tab">Links</button>
+    <button class="tab on" aria-current="page">Settings</button>
+  </div>
+  <div class="body">
+    <div class="fr" role="radiogroup" aria-labelledby="l-apply">
+      <div class="fl" id="l-apply">Apply changes</div>
+      <div class="opts">
+        <label class="op"><input type="radio" name="mode" checked><span class="t">When I press Sync<span class="rec">Recommended</span></span><span class="d">Changes wait in the panel badge. Sync applies them; Review opens only when something needs a decision.</span></label>
+        <label class="op"><input type="radio" name="mode"><span class="t">Automatically</span><span class="d">Changes apply in the background. If anything needs a decision, the whole batch waits for you in Changes.</span></label>
+      </div>
+    </div>
+    <div class="fr" role="radiogroup" aria-labelledby="l-mp4">
+      <div class="fl" id="l-mp4">Fragmented MP4</div>
+      <div class="opts">
+        <label class="op"><input type="radio" name="mp4" checked><span class="t">Ask in Review</span><span class="d">Import the original or skip it, file by file.</span></label>
+        <label class="op"><input type="radio" name="mp4"><span class="t">Import original as is</span></label>
+        <label class="op off"><input type="radio" name="mp4" disabled><span class="t">Repair before import</span><span class="d">Needs the media helper — not in this version.</span></label>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fl">Clip markers</div>
+      <div class="opts"><label class="op"><input type="checkbox" checked><span class="t">Find a marker TXT next to each video</span><span class="d">TXT name inside the video name, same folder. Applied during Sync.</span></label></div>
+    </div>
+    <div class="fr">
+      <div class="fl">Notifications</div>
+      <div class="opts"><label class="op"><input type="checkbox"><span class="t">Notify after a successful automatic sync</span><span class="d">Warnings and errors are always shown.</span></label></div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="hint">Saved automatically</span>
+    <button class="btn sec">Close</button>
+  </div>
+</div>
+</body>
+</html>

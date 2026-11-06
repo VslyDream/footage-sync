@@ -36,6 +36,16 @@ p { color:#a5a5aa; margin:6px 0 12px; line-height:1.5; }
 .footer { display:flex; align-items:center; justify-content:flex-end; padding:12px 18px; border-top:1px solid #39393e; background:#1f1f22; }
 .footer .hint { margin-right:auto; color:#99999f; font-size:11px; }
 .footer sp-button { margin-left:8px; }
+.links-toolbar { padding:12px 18px; border-bottom:1px solid #39393e; }
+.links-toolbar h1 { margin:0 12px 0 0; }
+#management-content { min-height:0; }
+.management-footer { padding:8px 18px; }
+.target-controls { flex:1; min-width:0; margin-right:16px; }
+.target-row { display:flex; align-items:center; min-height:24px; }
+.target-label,.target-toggle { width:108px; flex-shrink:0; margin:0 8px 0 0; font-size:11px; }
+.target-name { min-width:0; max-width:500px; font-size:11px; font-weight:normal; }
+.target-change { flex-shrink:0; padding:2px 6px; margin-left:8px; font-size:10px; }
+.target-missing .target-label,.target-missing .target-name { color:#ff8b8b; }
 sp-button { min-width:85px; }
 sp-textfield { width:100%; }
 sp-checkbox { margin-right:20px; }
@@ -91,3 +101,19 @@ sp-checkbox { margin-right:20px; }
 .marker-indicator { color:#e9b56a; margin-right:5px; }
 .history-row .row strong { flex:1; min-width:0; margin-right:10px; }
 .history-row .row .small-button { flex-shrink:0; }
+.bin-row { align-items:center; min-height:34px; }
+.bin-row .bin-toggle { padding:4px; width:26px; flex-shrink:0; }
+.bin-spacer { display:block; width:26px; flex-shrink:0; }
+.bin-label { flex:1; padding:8px; cursor:pointer; }
+.bin-label:hover,.bin-label:focus { background:#303034; }
+.bin-label:focus,.small-button:focus { border:1px solid #80baff; }
+.root-choice { margin-bottom:10px; }
+.marker-actions { margin:10px 0; }
+.marker-actions p { flex:1; margin-right:12px; }
+.marker-targets { margin-top:12px; max-height:275px; }
+#selected-clip { max-width:330px; }
+.operation { margin-top:12px; }
+.operation-log { max-height:110px; overflow:auto; margin-top:10px; }
+.operation-log .muted { margin-bottom:4px; }
+.progress-track { height:5px; background:#3a3a40; margin:10px 0; }
+.progress-fill { height:5px; background:#80baff; }

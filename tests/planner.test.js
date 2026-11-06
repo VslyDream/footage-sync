@@ -4,6 +4,16 @@ function fixture() {
   return {links:[{id:"a",binId:"b",binPath:"Footage/Video",folderPath:"D:/Media",subfolders:true}],scans:{a:{dirs:[{rel:"",identity:"dir0"}],files:[]}},inventory:{bins:[{id:"f",path:"Footage"},{id:"b",path:"Footage/Video"}],clips:[]},records:{}};
 }
 const file=(path,rel,id)=>({path,rel,identity:id,size:100,mtime:1});
+
+test("project root is reused without an empty bin and nested folders retain their paths",()=>{
+  const x=fixture();x.links[0].binId=null;x.links[0].binPath="";x.inventory.bins=[];
+  x.scans.a.dirs.push({rel:"Day",identity:"dir1"});x.scans.a.files=[file("D:/Media/a.wav","a.wav","a"),file("D:/Media/Day/b.wav","Day/b.wav","b")];
+  const plan=planSync(x);assert.deepEqual(plan.changes.filter(c=>c.kind==="new-folder").map(c=>c.path),["Day"]);
+  assert.equal(plan.changes.find(c=>c.path==="D:/Media/a.wav").target,"");
+  assert.equal(plan.changes.find(c=>c.path==="D:/Media/Day/b.wav").target,"Day");
+  x.inventory.bins=[{id:"day",path:"Day"}];x.inventory.clips=[{id:"a",mediaPath:"D:/Media/a.wav",parentPath:""},{id:"b",mediaPath:"D:/Media/Day/b.wav",parentPath:"Day"}];
+  assert.equal(planSync(x).changes.length,0);
+});
 test("Windows drive roots stay absolute through scan and relative-path operations",()=>{
   assert.equal(P.clean("D:\\"),"D:/");
   assert.equal(P.clean("D:/Media/.."),"D:/");

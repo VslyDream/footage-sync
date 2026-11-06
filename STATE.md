@@ -1,12 +1,47 @@
 # Footage Sync — Development State
 
-> Current development truth, updated 2026-10-13. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
+> Current development truth, updated 2026-11-06. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
+
+### MCP — deferred future vision, 2026-11-06
+
+[LOCKED — future intent only] Идея перенесена в [FUT-003](docs/FUTURE_VISION.md#fut-003--mcp-для-управления-footage-sync). **Не входит в ближайшие версии или текущий Next; не начинать реализацию/spike без нового явного запроса пользователя.** Vision: локальное управление из ChatGPT/Codex и Claude Desktop, общий Controller для UI/MCP, links/Ignore/Review/Sync с и без timeline. MCP включён по умолчанию, выключатель в Settings; тихое ожидание и автоматическое подключение без ручного запуска адаптера.
+
+[SPIKE — deferred] Архитектура local stdio adapter ↔ authenticated WebSocket ↔ UXP пока не реализована/не проверена в host. Обязательны численные замеры baseline без MCP, сборки с **выключенным MCP**, включённого MCP без адаптера, подключённого idle и активных операций; учитывать ресурсы Premiere/UXP и адаптера отдельно. Установка, permissions, lifetime/reconnect и семантика команд остаются предметом будущей проверки/решений. Полный scope, источники и матрица — FUT-003. Runtime, SPEC/UI_SPEC и установленная сборка не менялись.
+
+### UI inventory — 2026-11-04
+
+[VALIDATED — browser rendering only] Зафиксированы 46 состояний текущего runtime UI / 84 PNG: особенно Review с десятью футажами, warnings, MP4 Later/Import original, marker choices, sequence issues; Initial Sync, Status/progress и остальные реализованные окна. [Описание и границы](docs/UI_INVENTORY_2026-11-04.md), [локальная галерея](artifacts/ui-inventory-2026-11-04/index.html). Отдельные HTML сохраняют встроенный UI source snapshot; manifest содержит hashes. Длинные окна сняты с последовательной прокруткой. Использованы имитированные host-данные и приблизительные Spectrum widgets. Premiere при сборе не запущен; это не native acceptance/visual approval. Runtime/установка/пользовательские проекты не менялись. Node syntax и 22-module/manifest check passed. Следующий UI шаг — native сверка плотных Review/Status на тестовом проекте. Не реализованный UI-09 не имитировался как готовый экран.
 
 ## Current phase
 
+[LOCKED — user request/answer 2026-11-04] Автоматический Fill Frame реализуется собственным масштабированием при проверенном совпадении со штатной командой; это заменяет прежний ручной шаг. Потерянная native ссылка import project восстанавливается поиском того же сохранённого пути при штатном polling. Имя Type Tool клипа — имя папки без префикса.
+
 **v0.1 preview release / first working UXP core.**
 
-Сборка `0.1.0` ранее установлена в Premiere Pro 2025 **25.6.2** на Windows, отдельно от Polden OBS Bridge. Подготовлен предварительный релиз v0.1: CCX и готовая Windows-папка в ZIP, инструкция и SHA256. Это не завершённый MVP. Установка именно release CCX через Creative Cloud ещё не проверена; новая identity-aware scanner cache правка в этой сессии не устанавливалась в host. FUT-001 интегрирован; принятые правила находятся в SPEC §16 и UI_SPEC §8. Исходные golden screenshots сохранены.
+### Current source — project recovery, plain title names and Fill Frame, 2026-11-04
+
+[VALIDATED — recovery] Controller хранит primitive GUID/path и заменяет Project wrapper свежим результатом lookup, не читая старый `guid`. Отдельные stale views/active wrapper пропускаются; остальные ошибки сохраняются. Native fixture воспроизвёл `A nullptr was dereferenced.` после закрытия source project. Пока source закрыт, выбранная цель недоступна; после его открытия background scan восстановил тот же путь, zero changes/error null/completed без повторного selectProject. Дополнительно проверена throwing-guid wrapper. Периодичность остаётся 5 s; автоматического открытия/закрытия проектов и fallback к активному проекту нет.
+
+[VALIDATED — native Type Tool] Новый клип `2026-11-04-Developer`, span 2–4 s. Проверенный legacy титр `Footage Sync date 2026-11-04` после позднего импорта стал одним `2026-11-04-Developer`, span 2–6 s. Подпись внутри остаётся ISO датой. Остальные пользовательские клипы не переименовываются.
+
+[VALIDATED — native Fill comparison] В Premiere 25.6.2 штатный Fill Frame применён через UI к семи эталонам: portrait, HD, 4K, square, wide, non-square PAR и vertical Full HD. Итоговый свежий Controller import дал точное совпадение всех 11 Motion values; обе scale controls изменяются как у native. Семь пар PNG 1920×1080 имеют **0 different pixels** и одинаковые SHA256. Учтены native integer display-width rounding и float32 scale/percent, включая 720×576 PAR 128/117 → 243.65481567382812%. Импорт: 7 новых V1 clips + seed, 8 A1 clips, 1 Type Tool, 7 receipts; repeat zero. [Acceptance / границы](docs/RECONNECT_FILL_ACCEPTANCE.md), `artifacts/fill-compare-host-test/final/`.
+
+[LOCKED — retained behavior] Review adds source footage plus native Type Tool. File/folder Ignore is persistent and managed behind a Settings button; ignored issues disappear from current Sync/Review/Status/attention. Per-file Later defers this sync with explicit feedback; footer Later closes without applying. SPEC §11–12/§19 and UI_SPEC UI-02B/UI-08 apply.
+
+[VALIDATED — root cause] An unresolved fragmented MP4 could have its safe append checked independently. With no imported source, the controller silently continued instead of inserting anything. Read-only production-sidecar inspection found no queued/observed append. Review now gates the dependent action; the controller rejects unselected media dependencies before mutation and reports a missing/ambiguous post-import source as a durable sequence error. Completed receipt checkpoints do not require reimport.
+
+[VALIDATED — ignore] Per-project absolute file/folder rules prune filesystem access before stat/descent/TXT parsing. Ignored sources are omitted from reconciliation, markers, queued/observed sequence issues, counts and warning/error cards. Mappings/intents are retained for Restore; existing media/edits are preserved. Replacement files and future folder children stay ignored. Settings carries unsaved options across the manager. Tests cover boundaries/case, persistence rollback, unavailable roots, pending failures, cancellation/Restore and logical bin-to-disk mapping.
+
+[VALIDATED — native Premiere 25.6.2] Actual Review Later/Import original → Sync selected imported a genuine fragmented source and native V2 text. A mixed dated/Cyrillic batch and three late batches ended with eight V1 clips (seven imports + seed), eight A1 clips, four Type Tool clips and seven receipts. Same-date blocks extend their own title; disjoint returning dates get a separate block. Three further Syncs generated no duplicates. Native Ignore removed a broken MP4 from Review immediately; Settings Restore brought its error back. Folder ignore hid future invalid MP4/TXT. After normal exit and cold reopen, all footage/titles and the ignore rule persisted, zero pending/warnings, one target sequence. Saved-file reader independently decoded all four native text strings; Program rendered Cyrillic before/after restart. [Current acceptance](docs/TIMELINE_IGNORE_ACCEPTANCE.md), `artifacts/timeline-ignore-host-test/run1/`.
+
+[VALIDATED — checks / installed] **146 tests pass**; 24 runtime modules/manifest and diff checks pass. Main source installed with Premiere closed; **28/28 SHA256 match**, no extras (`artifacts/reconnect-fill-installed.json`). Native acceptance used a separate probe copy; the auto-running probe was removed with Premiere closed. Real Production media/projects were not mutation targets. Install identity remains 0.1.0; public assets unchanged, no new native helper/permission/service. Previous native Ignore/Review/cold reopen acceptance remains in `docs/TIMELINE_IGNORE_ACCEPTANCE.md`.
+
+[VALIDATED — retained source] Compact target footer/checkbox, per-file ISO-date or literal-folder labels including UTF-8, Import files only, intent/receipt protection, Browse form restoration and encoded literal filesystem IO/scanner cycle guards remain implemented. Previous same-date fallback/cold reopen/Production target selection evidence remains accepted. Source marker workflows, bin tree/root and live progress are retained. Native Undo/crash, second-editor locks, full keyboard/TXT UI matrix, representative audio/timecode, large/network profiling, macOS and long-running AUTO remain open.
+
+
+### Installed / published preview baseline
+
+Сборка `0.1.0` установлена в Premiere Pro 2025 **25.6.2** на Windows, отдельно от Polden OBS Bridge; текущая External-установка обновлена до source выше, включая закреплённые цели, native dates и encoded filesystem IO. Подготовлен предварительный релиз v0.1: CCX и готовая Windows-папка в ZIP, инструкция и SHA256. Это не завершённый MVP. Установка именно release CCX через Creative Cloud ещё не проверена. FUT-001 интегрирован; принятые правила находятся в SPEC §16 и UI_SPEC §8–§9. Исходные golden screenshots сохранены.
 
 [VALIDATED — v0.1 audit] 78 tests, 15-module syntax/manifest check; оба архива содержат ровно 18 plugin files, SHA256 совпадает с исходниками. Проверены Review Later/original/deferral, MP4 ASK/AUTO/NONE, запрет несуществующих Ignore/Repackage decisions, whole-batch blocking/repeats и container headers. Исправлен кэш MP4 classification при замене с теми же size/mtime: учитывает reliable identity; без неё classification не кэшируется. Новый native Premiere/remux/двухмашинный Production прогон не выполнен. Матрица: [V0_1_REVIEW.md](docs/V0_1_REVIEW.md).
 
@@ -58,12 +93,12 @@ FUT-001: UTF-8 parser, scanner TXT, discovery/policy service, project-contained 
 - AUTO работает после закрытия панели. В этой External-установке также проверен cold start с ранее закрытой панелью: после открытия проекта новый WAV импортирован без открытия панели и без success popup.
 - Fragmented MP4 detection на реальном `frag_keyframe` fixture: MP4 и безопасный WAV остановлены как один batch. Main Sync открыл единый Review; Later не изменил проект. После `Sync selected` импортирован только выбранный WAV, MP4 остался pending.
 - Unavailable source показан в Initial Sync / Review / Status. Main Sync и Status Sync disabled; пять клипов и три bins сохранены. Рабочий path после теста восстановлен.
-- Active project и свежий plan проверяются перед mutation; смена проекта/изменение размера, timestamp или identity после Review отменяет confirmation. Source повторно stat-checked перед каждой операцией. Verified mappings checkpointed после операций.
+- Закреплённый import project и свежий plan проверяются перед mutation; смена выбранной цели/изменение размера, timestamp или identity после Review отменяет confirmation. Source повторно stat-checked перед каждой операцией. Verified mappings checkpointed после операций.
 - Delete propagation отсутствует: planner не создаёт delete actions и сохраняет tombstones. Это проверено tests; реальный disk-delete сценарий ещё не проведён.
 
 [VALIDATED — automated checks]
 
-**81 tests passed**, syntax check 15 JS modules и manifest passed. Покрыты reconciliation/identity/batch/races; TXT validation/discovery/settling/retry, ручной приоритет/auto OFF, range с номером строки, latest receipt repeats, Undo/missing-receipt Review, source-only target/colors, failed metadata/Replace и pending recovery. Panel tests проверяют fit при width/height, точный count 12345 + attention/disabled, анимацию и очистку timers на idle/error/zero size/destroy, root-scoped observer и fallback. File-decision/container tests описаны выше; новые POSIX tests проверяют root join, native/relative paths и reuse/rename identity. Fake-host Undo не доказывает native rollback; geometry/POSIX tests не заменяют реальную Mac/DPI/keyboard acceptance.
+**146 tests passed**, syntax check 24 JS modules и manifest passed. Покрыты reconciliation/identity/batch/races; TXT validation/discovery/settling/retry, ручной приоритет/auto OFF, range с номером строки, latest receipt repeats, Undo/missing-receipt Review, source-only target/colors, failed metadata/Replace и pending recovery. Panel tests проверяют fit при width/height, точный count 12345 + attention/disabled, анимацию и очистку timers на idle/error/zero size/destroy, root-scoped observer и fallback. File-decision/container tests описаны выше; новые POSIX tests проверяют root join, native/relative paths и reuse/rename identity. Fake-host Undo не доказывает native rollback; geometry/POSIX tests не заменяют реальную Mac/DPI/keyboard acceptance.
 
 [VALIDATED — installation isolation]
 
@@ -81,15 +116,20 @@ FUT-001: UTF-8 parser, scanner TXT, discovery/policy service, project-contained 
 
 ## Not implemented / known gaps
 
-- Bundled helper, FFmpeg preparation, hidden process launch, update и cleanup. Release archives реализованы. `Fix automatically` пока удерживает fragmented media для Review; там явно указана недоступность automatic repair. Постоянного Ignore нет; Later — deferral. Автоматическая подготовка не подменяется импортом оригинала.
+- Bundled helper, FFmpeg preparation, hidden process launch, update и cleanup. Release archives реализованы. `Fix automatically` пока удерживает fragmented media для Review; там явно указана недоступность automatic repair. Постоянный Ignore реализован отдельно в Review/Settings; Later остаётся deferral. Автоматическая подготовка не подменяется импортом оригинала.
 - Folder Unavailable recovery dialog (UI-09), last-available metadata, detailed reconnect/conflict choices. Источник можно восстановить через Edit link; offline media при unchanged path ещё не восстанавливается отдельно.
 - Explicit AUTO warning/error notification при скрытой панели: сейчас issue виден через badge/Status; notification settings сохранены, policy подключена не полностью. Links unavailable source пока показывает Active вместо автоматически paused presentation; active-link counter требует derived state.
-- Monitoring Footage project, когда активен другой проект Production, и read-only/locked project handling. Controller пока работает только с active saved project.
+- Второй editor и read-only/locked Production members, длительный AUTO с новой timeline target и native sequence Undo/crash matrix. Закреплённые цели при активном другом проекте уже проверены в native Production.
 - Performance profiling на больших деревьях и сетевом/Lucid storage, memory/cache bounds и длительная idle stability.
 - Stable identity на network/macOS volumes. При ненадёжной identity новый неоднозначный файл блокируется, а не угадывается по имени/размеру.
 - CCX release installation, permission UX acceptance и macOS real-host support acceptance. Mac preview packaging реализован; native Mac тестов нет.
 - Visual acceptance: FUT-002 реализован, narrow floating/docked и row проверены; новые runtime references предоставлены, старый Main Panel PNG сохранён как previous design. Новые снимки не являются отдельным пользовательским visual approval. Keyboard/nonzero-count host matrix, workspace restoration и recorded Windows DPI ещё требуют проверки. Плотность таблиц остальных окон вне FUT-002; table headers местами сжаты, Notifications Settings доступна через scroll.
 - History теперь различает zero-action deferred batch (`No changes applied`) и up-to-date. Предыдущая тестовая запись может оставаться в истории sidecar.
+- [LOCKED — user decision 2026-11-06] UI redesign перенесён в SPEC (§6–§11, §12, §15, §16, §19) и docs/UI_SPEC.md. Golden PNG + статические HTML-двойники — `docs/ui/redesign-2026-11/`; исходный design canvas — https://claude.ai/artifact/8JZVDCSvhn8ph4w8HFRHmH (приватный, для реализации не нужен). Runtime ещё полностью старый; реализация не начата.
+- Расхождения текущего runtime с новым контрактом (= объём реализации redesign): отдельные окна Links/Settings, Status и Review вместо одного окна с вкладками; Review — плоский список операций (строка 86–115 px, видео даёт две строки) вместо блоков Needs you / Ready to apply с группами; [VALIDATED — code review 2026-11-04] ASK и MANUAL ведут себя одинаково (controller проверяет только `mode==="AUTO"`), в Settings всё ещё три режима и Save/Cancel; [VALIDATED — code review 2026-11-04] `Ignore…` и `Add markers…` закрывают Review и открывают новый с пустым `decisions` — решения и снятые галочки теряются; кнопка `Add markers…` в Initial Sync/Review/Status; Create matching bins с мультивыбором; список игнора за кнопкой в Settings, нет Exclude subfolders; цели импорта в футере Links; badge и счётчики считают операции (раскладка отдельно); Main Panel уменьшает кнопки без нижнего предела (`panel-layout.js`; manifest `minimumSize` 40 × 48 при доке не гарантирован); галочки Links меняются вживую, удаление link без подтверждения.
+- [LOCKED — user decision 2026-11-06] AUTO при items в Needs you: ждёт весь batch, как сейчас (SPEC §6); текст Settings исправлен на доске и в UI_SPEC.
+- Все экраны redesign нарисованы и выгружены (18 PNG + 18 HTML в `docs/ui/redesign-2026-11/`); History упрощена до средства проверки, выбор bin — дерево (user request 2026-11-06). Текстовыми остаются только Add markers TXT/clip chooser, project/sequence pickers и общие error details — содержимое как сейчас, оформление по redesign.
+- [SPIKE — 2026-11-06] Меню ⋯/поповеры внутри UXP dialog; открытие вложенных диалогов и native pickers поверх окна без потери состояния; подсчёт media/объёма в Exclude subfolders без заметной нагрузки на сетевых томах.
 
 ## Technical spikes
 
@@ -109,13 +149,17 @@ Official evidence и local findings разделены в IMPLEMENTATION_NOTES. 
 
 ## Next
 
-Приоритет v0.1: выполнить установку release CCX/ZIP в host; проверить новую scanner правку и permissions. Затем проверить shared-profile root/bin anchor и read-only Production, согласовать adoption/migration и permanent Ignore/helper policy по research docs. До этого релиз остаётся preview.
+UI redesign (контракт и все экраны утверждены/нарисованы 2026-11-06, см. Not implemented): до кода — spike меню ⋯ и сохранения состояния в UXP dialog. Затем реализовать по UI_SPEC с установкой через `scripts/install-dev.ps1` и native acceptance.
+
+Текущая source с project recovery, plain title names и automatic Fill Frame установлена; native comparison семи форматов и fresh footage/audio/Type Tool import завершены. [Current acceptance](docs/RECONNECT_FILL_ACCEPTANCE.md). Следующие проверки: second-editor locks, native sequence interruption/Undo, representative audio/timecode layouts, rotation/default Scale-to-Frame preference, другие frame/PAR targets, long-running AUTO и large/network profiling. Release assets этим запросом не публиковались.
+
+Приоритет v0.1: выполнить установку release CCX/ZIP в host; проверить новую scanner правку и permissions. Затем проверить shared-profile root/bin anchor и read-only Production, согласовать adoption/migration и helper policy по research docs. До этого релиз остаётся preview.
 
 Mac: проверить в первую очередь ручное копирование Mac-Manual folder в user External без Creative Cloud Desktop на копии проекта, затем folder picker/Initial Sync/import/repeat/rename/relink и closed-panel AUTO. CCX installation acceptance остаётся отдельным spike. Переупаковка и production locks остаются прежними gaps; публикация Mac preview их не закрывает.
 
 1. FUT-001 перед release: закрыть crash/partial-failure acceptance и product decision для native Undo и XMP preference ON без молчаливого изменения настроек Premiere.
 2. Validate HELPER-001 через minimal hidden bundled job до automatic MP4 preparation. При подтверждённом конфликте с UX записать evidence/options и получить product decision до изменения SPEC.
-3. Finish AUTO warnings, offline recovery/paused presentation и Production monitoring; проверить locks и partial failures.
+3. Finish AUTO warnings, offline recovery/paused presentation; проверить Production locks и partial failures.
 4. Расширить real-host tests: existing-bin initial reconciliation, wrong-bin reuse, cross-link folders, deletes и network storage; затем profile large trees и docked/keyboard/visual acceptance.
 5. FUT-002: после восстановления захвата окна закончить keyboard/nonzero-count/attention host matrix и workspace/DPI проверки. Использовать отдельную UI Probe, не менять sync semantics. Реализация и installed source verification завершены.
 

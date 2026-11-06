@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Exclude subfolders</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.body{flex:1;min-height:0;padding:16px 20px;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.title{font-size:17px;font-weight:400;margin:0;color:#f0f0f2}
+.title span{color:#8f8f96}
+.lead{color:#a5a5aa;font-size:12px;margin:2px 0 0}
+.tf{width:260px;height:30px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:13px}
+.tf::placeholder{color:#8a8a90}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22;overflow:hidden}
+.r{display:grid;grid-template-columns:minmax(0,1fr) 70px 80px;align-items:center;gap:10px;height:31px;padding:0 12px;border-bottom:1px solid #2f2f33}
+.r:last-child{border-bottom:0}
+.h{background:#1c1c1f;color:#8f8f96;font-size:10px;letter-spacing:.06em;height:26px}
+.n{display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
+.tw{width:12px;flex:none;display:inline-flex}
+.num{text-align:right;color:#b8b8bd;font-size:12px}
+.off .nm{color:#85858b}
+.off .num{color:#6f6f75}
+.xt{font-size:10px;padding:1px 6px;border-radius:3px;background:#33302a;color:#d9c49b}
+.heavy{color:#e3bd7c}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 720px; height: 560px">
+  <div class="os"><span>Exclude subfolders</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="body">
+    <div>
+      <h1 class="title">Footage/Video <span>↔</span> D:/Shoots/Expedition_S02</h1>
+      <p class="lead">Unchecked folders are skipped by Sync. Items already in Premiere stay as they are.</p>
+    </div>
+    <input class="tf" type="text" aria-label="Filter folders" placeholder="Filter folders">
+    <div class="box" role="tree" aria-label="Folders in this link">
+      <div class="r h"><span>FOLDER</span><span class="num" style="color: #8f8f96">MEDIA</span><span class="num" style="color: #8f8f96">SIZE</span></div>
+      <div class="r" role="treeitem" aria-expanded="true"><span class="n"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="Sync Expedition_S02"><span class="nm">Expedition_S02</span></span><span class="num">104</span><span class="num">535 GB</span></div>
+      <div class="r" role="treeitem" aria-expanded="false"><span class="n" style="padding-left: 18px"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="Sync 2026-11-01"><span class="nm">2026-11-01</span></span><span class="num">42</span><span class="num">210 GB</span></div>
+      <div class="r" role="treeitem" aria-expanded="false"><span class="n" style="padding-left: 18px"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="Sync 2026-11-02"><span class="nm">2026-11-02</span></span><span class="num">40</span><span class="num">198 GB</span></div>
+      <div class="r" role="treeitem" aria-expanded="true"><span class="n" style="padding-left: 18px"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg></span><input type="checkbox" checked aria-label="Sync 2026-11-03"><span class="nm">2026-11-03</span></span><span class="num">22</span><span class="num">127 GB</span></div>
+      <div class="r" role="treeitem"><span class="n" style="padding-left: 36px"><span class="tw"></span><input type="checkbox" checked aria-label="Sync CamA"><span class="nm">CamA</span></span><span class="num">9</span><span class="num">64 GB</span></div>
+      <div class="r" role="treeitem"><span class="n" style="padding-left: 36px"><span class="tw"></span><input type="checkbox" checked aria-label="Sync CamB"><span class="nm">CamB</span></span><span class="num">8</span><span class="num">58 GB</span></div>
+      <div class="r" role="treeitem"><span class="n" style="padding-left: 36px"><span class="tw"></span><input type="checkbox" checked aria-label="Sync Phone"><span class="nm">Phone</span></span><span class="num">1</span><span class="num">1 GB</span></div>
+      <div class="r" role="treeitem"><span class="n" style="padding-left: 36px"><span class="tw"></span><input type="checkbox" checked aria-label="Sync Sound"><span class="nm">Sound</span></span><span class="num">4</span><span class="num">4 GB</span></div>
+      <div class="r off" role="treeitem"><span class="n" style="padding-left: 36px"><span class="tw"></span><input type="checkbox" aria-label="Sync _proxy"><span class="nm">_proxy</span><span class="xt">excluded</span></span><span class="num">214</span><span class="num heavy">96 GB</span></div>
+      <div class="r off" role="treeitem" aria-expanded="false"><span class="n" style="padding-left: 18px"><span class="tw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#6f6f75" stroke-width="1.6"></path></svg></span><input type="checkbox" aria-label="Sync _renders"><span class="nm">_renders</span><span class="xt">excluded</span></span><span class="num">18</span><span class="num heavy">640 GB</span></div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="hint">2 folders excluded · 232 files · 736 GB not synced</span>
+    <button class="btn sec">Cancel</button>
+    <button class="btn cta">Save</button>
+  </div>
+</div>
+</body>
+</html>

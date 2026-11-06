@@ -25,7 +25,7 @@
 - отдельный экран управления links;
 - initial sync/reconciliation approach.
 
-Не копируем функции, которые нам не нужны, включая `SEQ` и `FLT`.
+Не копируем per-link controls `SEQ` и `FLT`. [LOCKED — user decision 2026-10-27] Выбор общей Footage sequence и автоматическое добавление нового видео описаны в §19.
 
 ---
 
@@ -147,9 +147,30 @@ Managed subtree should converge to disk structure for additions, renames and mov
 
 Sync mode — **global for the project/plugin context**, а не индивидуальный для каждого link.
 
-Доступны три режима:
+[LOCKED — user decision 2026-11-06, UI redesign] Доступны два режима. Прежние ASK и MANUAL вели себя одинаково (различался только текст Settings) и объединены в `When I press Sync`. Сохранённое значение MANUAL читается как ASK.
 
-### AUTO
+### When I press Sync (default, internal ASK)
+
+Плагин обнаруживает и накапливает pending changes, но не применяет их автоматически. Ожидающее видно в badge Main Panel и во вкладке Changes.
+
+Явное нажатие `Sync` является confirmation для batch без items, требующих решения. Такой batch применяется сразу, без дополнительного окна.
+
+Если в batch есть хотя бы один item, требующий решения, `Sync` открывает окно Footage Sync на вкладке **Changes** со всем batch (§11). До `Apply` ни одно изменение из этого batch не применяется.
+
+Items, требующие решения (blocking; во вкладке Changes — блок `Needs you`):
+
+- conflicts/errors, которые пользователь должен разрешить или игнорировать;
+- недоступная цель импорта (§19);
+- fragmented MP4 в режиме `Ask in Review`;
+- изменённый или повторно назначенный marker TXT (§16);
+- interrupted/undone sequence append (§19);
+- любое другое change, для которого нужен явный выбор пользователя.
+
+Недоступная linked folder — состояние связи, а не строка `Needs you`: она показывается в строке статуса Changes и в Links (§8, §15.8).
+
+Не показывать popup на каждый файл.
+
+### Automatically (internal AUTO)
 
 Плагин автоматически применяет обнаруженные изменения.
 
@@ -157,49 +178,19 @@ Sync mode — **global for the project/plugin context**, а не индивид�
 - работа не должна создавать заметных lag/stutter в Premiere;
 - monitoring должен быть достаточно lightweight для обычного editing workflow.
 
+[LOCKED — user decision 2026-11-06] Batch с хотя бы одним item, требующим решения, не применяется автоматически целиком, включая его safe-часть. Он ждёт во вкладке Changes; Main Panel показывает attention (§10). Применение — через `Apply` после решений, по общим правилам §11.
+
 [SPIKE] Требуется проверить, может ли AUTO надёжно работать, когда plugin panel закрыта/скрыта, пока Premiere открыт.
-
-### ASK
-
-Плагин обнаруживает и накапливает pending changes, но не применяет их автоматически.
-
-Явное нажатие `Sync` является confirmation для batch без blocking items. Такой batch применяется сразу, без дополнительного confirmation dialog.
-
-Если в batch есть хотя бы один blocking item, открывается **один batch Review Changes**. До решения пользователя ни одно изменение из этого batch не применяется.
-
-Blocking items:
-
-- conflicts/errors;
-- unavailable source;
-- fragmented MP4 в режиме `Ask before fixing`;
-- любое другое change, для которого нужен явный выбор пользователя.
-
-Не показывать popup на каждый файл.
-
-Пример:
-
-```text
-17 changes detected
-+ 14 new files
-+ 2 new folders
-↪ 1 renamed file
-
-[Later] [Review] [Sync]
-```
-
-### MANUAL
-
-Плагин обнаруживает/показывает pending state, но ничего не применяет без ручной команды `Sync`.
 
 ### Placement in UI
 
 [LOCKED]
 
-AUTO / ASK / MANUAL **не находятся постоянно на Main Panel**.
+Режим **не находится на Main Panel**.
 
-Настройка режима находится в Settings view общего Links / Settings window.
+[LOCKED — user decision 2026-11-06] Настройка режима находится во вкладке Settings окна Footage Sync (§15).
 
-Main Panel содержит только `Links`, `Sync` и `Status`. Детали current status находятся в Status window; на Main Panel допустим только compact badge/attention indicator.
+Main Panel содержит только `Links`, `Sync` и `Status`. Детали ожидающего и текущего процесса — во вкладке Changes; на Main Panel допустим только compact badge/attention indicator (§10).
 
 ---
 
@@ -219,30 +210,21 @@ Footage / 01_VIDEO
 L:\Timber Truck\02_Assets\01_VIDEO
 ```
 
-[LOCKED] Поддерживаем два entry flows.
+[LOCKED — user decision 2026-11-06, supersedes separate Flow A / Flow B dialogs] Link создаётся одним диалогом `Add link` (`+ Add link` во вкладке Links):
 
-### Flow A — link existing Premiere bin
+1. **Folder on disk** — путь + `Browse…`; под полем краткая сводка выбранной папки (подпапки, число media).
+2. **Where in Premiere** — один из двух вариантов:
+   - `Into an existing bin [bin ▾]` — содержимое папки попадает в выбранный существующий bin (прежний Flow A);
+   - `Into a new bin “<folder name>”, inside [bin ▾]` — создаётся bin с именем папки внутри выбранного родителя (прежний Flow B для одной папки).
 
-Пользователь:
-1. выбирает/указывает существующий bin;
-2. выбирает соответствующую system folder;
-3. видит Initial Sync;
-4. подтверждает link.
+   Под каждым вариантом показано, куда лягут файлы (пример пути вида `Footage/Video/2026-11-03/CamA/…`), и, где применимо, сколько matching bins уже существует.
+3. **Options** — `Include subfolders` (default On), `Path relative to the project` (default Off, для project templates).
 
-UI может использовать `+ Add link`.
+`Preview link` открывает превью новой связи (§9). До подтверждения превью проект не меняется.
 
-### Flow B — create matching bins automatically
+[LOCKED — user request 2026-11-06] Выбор bin — раскрывающееся дерево, а не плоский список: сначала видны только верхние bins (например, Footage, Graphics, Sequences); стрелка раскрывает bin, имя выбирает его, вложенность любой глубины. Открывается с раскрытым путём до текущего выбора. `Project root` — первый пункт; отдельной опции root нет. [LOCKED — user request 2026-10-15, сохраняется] При root-link media из корня system folder попадают в корень проекта, а подпапки — в соответствующие bins при включённом Subfolders.
 
-UX reference: Watchtower `Select Folders / Standard`.
-
-Пользователь видит filesystem tree и выбирает одну или несколько папок.
-
-Плагин:
-1. создаёт matching bins;
-2. создаёт links;
-3. показывает Initial Sync перед применением.
-
-Оба flows приводят к одной и той же внутренней сущности Link и появляются в общем Links Manager.
+Мультивыбор нескольких папок с созданием нескольких links за один раз убран: несколько links добавляются по одному. Оба варианта приводят к одной внутренней сущности Link и появляются в общем списке Links.
 
 ---
 
@@ -252,24 +234,28 @@ UX reference: Watchtower `Select Folders / Standard`.
 
 UX reference: Watchtower `Select Folders / Advanced`.
 
-Нужен отдельный экран/section с таблицей existing links.
-
-Минимальная концепция:
-
-```text
-Bin / Premiere path     Settings/flags     Folder path
----------------------------------------------------------------
-01_VIDEO                [...]              L:\...\01_VIDEO
-02_AUDIO                [...]              L:\...\02_AUDIO
-```
+[LOCKED — user decision 2026-11-06] Links — вкладка окна Footage Sync (§15) с таблицей existing links.
 
 Пользователь должен иметь возможность:
-- видеть все links;
-- менять Premiere bin/path;
-- менять system folder path;
-- редактировать поддерживаемые flags/options;
-- удалить link;
-- добавить новый link.
+- видеть все links и их состояние;
+- менять Premiere bin/path и system folder path (`Edit link…`);
+- редактировать поддерживаемые flags/options (`Edit link…`; в таблице флаги показаны метками, а не живыми галочками);
+- исключать подпапки link (`Exclude subfolders…`);
+- ставить link на паузу и возобновлять;
+- удалить link (`Remove link…` с подтверждением);
+- добавить новый link (§7).
+
+Row actions собраны в меню ⋯ строки: `Edit link…`, `Exclude subfolders…`, `Pause` / `Resume`, `Remove link…`. Состояния строки: `Active` (с числом pending или `up to date`), `Paused` (+ `Resume`), `Unavailable` (+ `Reconnect…`). Изменения во вкладке сохраняются сразу.
+
+Над таблицей — тихая строка цели импорта (§19) с `Change…`, поиск, кнопка ⋯ со списком `Ignored files and folders (N)…` (§11) и `+ Add link`. Отдельной вкладки или кнопки Ignore в Settings нет.
+
+### Exclude subfolders
+
+[LOCKED — user request 2026-11-06] Сценарий: синхронизировать большую папку, исключив тяжёлые нерелевантные подпапки (прокси, рендеры).
+
+`Exclude subfolders…` открывает дерево папок этого link: галочка = синхронизировать; для каждой папки видны число media и объём; есть фильтр. Footer показывает итог (`N folders excluded · files · size not synced`), `Cancel` / `Save`. Снятая папка сохраняется как persistent ignore rule `Folder and subfolders` (§11) и действует до явного возврата галочки или Restore. Уже существующие в Premiere items/bins не меняются. Строка link в таблице показывает метку `N folders excluded`.
+
+[SPIKE] Подсчёт числа media и объёма выполняется только при открытии окна и не должен заметно нагружать диск/сеть (§13), особенно на сетевых томах; при долгом подсчёте дерево доступно до появления чисел.
 
 `SEQ` не нужен.  
 `FLT` не нужен.
@@ -313,7 +299,14 @@ Existing structure detected:
 
 Existing matching bins/items должны переиспользоваться, а не дублироваться.
 
-Initial Sync является общей финальной стадией для обоих flows создания link.
+Initial Sync является общей финальной стадией создания link.
+
+[LOCKED — user decision 2026-11-06] Initial Sync — это тот же экран Changes (§11) в режиме новой связи, в отдельном окне `New link`: те же блоки `Needs you` и `Ready to apply`, те же правила решений, счёта и игнора. Отличия режима:
+
+- заголовок `NEW LINK · PREVIEW`, mapping `bin ↔ folder` и сводка reuse (например, `82 files already in the project are reused, nothing is duplicated`);
+- `Ready to apply` по умолчанию сгруппирован по папкам: папка уже в проекте (reused, без галочки), папка с relink (renamed/moved), `new bin`; у папки — число файлов, объём, первые имена файлов и метки (например, `1 TXT skipped`);
+- меню ⋯ папки: `Exclude this folder` (создаёт исключение этого link, как в §8), `Show all N files`, `Ignore a file…`; исключённая папка остаётся видна с меткой `excluded`;
+- footer: `Cancel` / `Link and apply N changes`; нерешённые items остаются ждать, как в Changes.
 
 ---
 
@@ -325,7 +318,9 @@ Main Panel должна быть предельно компактной, в д�
 
 [LOCKED — FUT-002, user decision 2026-10-06]
 
-Одна dockable Main Panel автоматически переключается между вертикальной колонкой при узкой ширине и горизонтальным рядом при пересечении порога ширины. Иконки, области кнопок и отступы масштабируются по фактическому доступному размеру; при недостатке высоты предпочтительно уменьшать controls и избегать прокрутки. Порог и практические границы размера определяются при реализации/host-проверке с сохранением доступности всех трёх actions.
+Одна dockable Main Panel автоматически переключается между вертикальной колонкой при узкой ширине и горизонтальным рядом при пересечении порога ширины. Иконки, области кнопок и отступы масштабируются по фактическому доступному размеру. Порог определяется при реализации/host-проверке с сохранением доступности всех трёх actions.
+
+[LOCKED — user request 2026-11-06, supersedes «уменьшать controls и избегать прокрутки»] У кнопок есть нижний предел размера — около `28 px` (точное значение фиксируется при host-проверке). Ниже него кнопки больше не уменьшаются, панель прокручивается. Manifest `minimumSize` не считается гарантией: при доке Premiere может сжать панель сильнее.
 
 Около `50 × 250 px` — ориентир компактности, а не жёсткий общий размер или гарантированный minimum Premiere. Основной рабочий вариант — компактно закреплённая вертикальная панель. Постоянных текстовых подписей нет ни в узком, ни в широком виде; названия действий доступны в подсказках.
 
@@ -339,27 +334,28 @@ Main Panel должна быть предельно компактной, в д�
 
 Названия `Links`, `Sync`, `Status` обозначают действия; в Main Panel они представлены иконками без постоянных подписей.
 
-`Sync` применяет batch сразу, без confirmation window, если blocking items отсутствуют. Если есть blocking items, `Sync` открывает Review Changes для всего batch. При unavailable source Sync disabled.
+`Sync` применяет batch сразу, без confirmation window, если items, требующих решения, нет. Если они есть, `Sync` открывает окно Footage Sync на вкладке Changes для всего batch. При unavailable source Sync disabled.
 
-Settings action на Main Panel отсутствует. Переход в Settings доступен из общего header окна Links.
+[LOCKED — user decision 2026-11-06] Кнопки открывают одно окно Footage Sync (§15) на своей вкладке: `Links` → Links, `Status` → Changes, `Sync` с решениями → Changes. Settings action на Main Panel отсутствует; Settings — вкладка того же окна.
 
-Main Panel не показывает inline status summary, sync history, conflicts, link list, Settings content или Sync mode. Status action показывает числовой badge pending changes; attention различимо дополнительно и не заменяет существующий count. Выполняющийся Sync обозначается анимацией (предпочтительно кружок/spinner); повторная активация disabled. Details открываются только в отдельном Status window.
+Main Panel не показывает inline status summary, sync history, conflicts, link list, Settings content или Sync mode. Выполняющийся Sync обозначается анимацией (предпочтительно кружок/spinner). [LOCKED — user request 2026-10-15] Нажатие на работающий кружок открывает подробности текущего процесса; второй Sync не запускается. [LOCKED — 2026-11-06] Подробности процесса показываются в окне Footage Sync на вкладке Changes.
+
+[LOCKED — user decision 2026-11-06, badge variant A]
+
+- `Status` показывает основной числовой badge — число ожидающих изменений по правилу счёта §11 (добавление на таймлайн отдельно не считается);
+- если есть items в `Needs you`, на `Status` дополнительно виден янтарный badge с их числом и янтарная рамка; основной count при этом сохраняется;
+- на `Sync` янтарная точка, когда нажатие откроет Changes, а не применит batch сразу;
+- tooltip `Status` повторяет сводку вкладки Changes (например, `34 changes waiting · 3 need you`, предупреждения) и поясняет, что Sync сначала откроет Changes.
 
 ---
 
-## 11. Review Changes
+## 11. Changes (formerly Review Changes)
 
 [LOCKED]
 
-Используется:
+Показывает batch changes до применения. Не показывать отдельное confirmation window на каждый файл.
 
-- обязательно, если в batch есть blocking items;
-- доступно как manual action из Status window;
-- может использоваться при Initial Sync.
-
-Если blocking item присутствует, Review показывает весь batch. Safe changes не применяются до тех пор, пока пользователь не подтвердит batch.
-
-Показывает batch changes до применения.
+Если item, требующий решения, присутствует, показывается весь batch, и ничего из него не применяется до подтверждения пользователя.
 
 Минимальные категории:
 - new files;
@@ -370,7 +366,46 @@ Main Panel не показывает inline status summary, sync history, confli
 - conflicts/errors;
 - media requiring fragmented MP4 handling.
 
-Не показывать отдельное confirmation window на каждый файл.
+[LOCKED — user decision 2026-11-06, UI redesign] Review Changes и Status заменены вкладкой **Changes** окна Footage Sync. Она открывается из Main Panel (`Status`, `Sync` с решениями) и используется как превью новой связи (§9). Упоминания Review/Status в других разделах означают вкладку Changes (история — вкладку History). Визуальный контракт — [UI_SPEC UI-08](docs/UI_SPEC.md).
+
+**Строка статуса** (тихая, под вкладками): цель импорта (`Into <project> → <sequence>`), время последнего sync, состояние links (например, `1 link paused`, ведёт в Links) и `Check now`.
+
+**Два блока, без третьего блока Attention:**
+
+1. **`Needs you`** — только items, у которых есть действие прямо в строке (выбор или одна кнопка) и без которых что-то не применится: fragmented MP4 (`Import originals` / `Skip this time`), изменённый marker TXT (`Replace` / `Add to existing` / `Skip TXT`), конфликт вроде «файл используется двумя project items» (пояснение + `Ignore…`), interrupted sequence append, недоступная или сломанная цель импорта. Одинаковые проблемы сворачиваются в одну строку с общим действием (например, `2 fragmented MP4 — Import originals / Skip this time`) и раскрываются по файлам по `Per file`. Подсказка блока: ничего отсюда не применяется, пока не выбрано.
+2. **`Ready to apply`** — всё, что применится по кнопке `Apply`. Группы с галочкой, числом и сводкой: `New files`, `New bins`, `Renamed and moved`, `Add new videos to timeline`, `Clip markers`. Переключатель `Group by: Type | Folder`, `Select none`. Группа раскрывается до папок и файлов; у файла — галочка, метки (`+ timeline`, `TXT skipped · line 4`, `stays pending` для снятого) и меню ⋯.
+
+Всё остальное — не отдельный блок:
+
+- предупреждение, относящееся к файлу, — метка в строке этого файла/группы;
+- ожидание, которое пройдёт само (`still copying`), — тихая сноска под `Ready to apply`;
+- состояние (пауза link, последний sync, цель импорта) — строка статуса.
+
+Если блок `Needs you` прокручен из вида, а решения открыты, сверху закреплена строка `N items in Needs you above are still open · Show`.
+
+**Меню ⋯ строки файла:** `Ignore this file…`, `Ignore folder <folder>…`, `Import without adding to timeline`, `Add markers from TXT…` (§16), `Copy full path`.
+
+**Меню ⋯ окна:** `Add markers from TXT…`, `Ignored files and folders (N)…`, `Change import project or timeline…`.
+
+**Footer:** подсказка `N items wait for you`, `Close`, `Apply N changes`. `Apply` применяет отмеченное в `Ready to apply` и решённые строки `Needs you`; нерешённые не применяются и остаются ждать вместе со своими зависимыми операциями (добавление на таймлайн). `Close` закрывает окно без применения.
+
+**Правило счёта** (badge, вкладка, группы, `Apply`): изменения считаются так, как их видит монтажёр — файл, bin, rename/move, маркеры одного TXT. Добавление нового видео на таймлайн — зависимая опция этого видео и отдельно не считается.
+
+Ignore, Add markers и выбор цели открываются поверх Changes и не сбрасывают уже принятые решения, снятые галочки и прокрутку.
+
+[SPIKE] Меню/поповеры ⋯ внутри UXP modal dialog и сохранение состояния при открытии вложенных диалогов и native pickers.
+
+---
+
+### Persistent ignore
+
+[LOCKED — user request 2026-10-28] Можно явно игнорировать файл либо его папку со всеми подпапками. Список хранится для выбранного import project; в списке можно добавить абсолютный путь или восстановить правило.
+
+[LOCKED — user decision 2026-11-06] Точки входа: меню ⋯ строки файла в Changes (`Ignore this file…`, `Ignore folder…`), кнопка `Ignore…` в строке конфликта, `Exclude subfolders…` в Links (§8), `Exclude this folder` / `Ignore a file…` в превью новой связи (§9). Список `Ignored files and folders (N)…` открывается из меню ⋯ над таблицей Links и из меню ⋯ окна. Кнопки Ignore в Settings больше нет.
+
+Игнор действует до явного Restore, включая замену файла по тому же пути и новые файлы внутри игнорируемой папки. Эти пути исключаются из сканирования, sync/reconciliation, pending sequence appends и marker discovery; их проблемы не появляются в Changes, History, badges или текущих warning/error cards. Уже созданные Project Items, bins, markers и монтаж не удаляются и не меняются из-за игнора. Сохранённые mappings/незавершённые intents остаются для восстановления; Restore возобновляет обычный анализ с прежними правилами Changes и защиты от дублей. Другие пути продолжают обрабатываться.
+
+`Skip this time` (прежний per-file `Later`) не означает постоянный игнор: он снимает импорт этого MP4 и зависимое добавление на таймлайн на текущий Sync, с явным текстом о переносе. `Close` (прежний нижний `Later`) закрывает окно без применения изменений. Для постоянного скрытия используется отдельный Ignore.
 
 ---
 
@@ -391,6 +426,8 @@ Fragmented MP4
 ```
 
 Default: `Ask before fixing`.
+
+[LOCKED — user decision 2026-11-06, UI redesign] Подписи в Settings: `Ask in Review` (= Ask before fixing, default; решение в Changes: `Import original` / `Skip this time`), `Import original as is` (= Don't fix), `Repair before import` (= Fix automatically). Пока bundled helper не поставляется, `Repair before import` виден, но неактивен с пояснением `Needs the media helper — not in this version`, а в Changes нет действия ремонта.
 
 ### Bundled helper
 
@@ -439,7 +476,7 @@ Performance strategy — implementation detail.
 
 - bidirectional disk ↔ Premiere sync;
 - automatic delete propagation;
-- `SEQ`;
+- per-link `SEQ` flag (общая Footage sequence добавлена в §19);
 - `FLT`;
 - отдельное helper application, которое пользователь должен запускать;
 - UX, завязанный на отдельную постоянно работающую программу.
@@ -456,116 +493,71 @@ Detailed screen contracts, transitions and the approved main-screen PNG referenc
 
 Интерфейс англоязычный, compact/dense, в dark-theme стиле Premiere и Adobe Spectrum.
 
-Основная точка входа — адаптивная dockable Main Panel по §10: ориентир узкого вертикального вида около `50 × 250 px`, автоматический переход к горизонтальному при расширении. FUT-002 меняет только Main Panel. Весь содержательный UI, кроме direct action `Sync`, открывается в отдельных windows/modal dialogs, как в UX reference Watchtower:
+Основная точка входа — адаптивная dockable Main Panel по §10: ориентир узкого вертикального вида около `50 × 250 px`, автоматический переход к горизонтальному при расширении.
 
-- Links / Settings management window;
-- Status;
-- Create Link — existing bin;
-- Create matching bins — filesystem tree;
-- Initial Sync;
-- Review Changes;
+[LOCKED — user decision 2026-11-06, UI redesign; supersedes separate Links / Settings, Status and Review windows] Весь содержательный UI, кроме direct action `Sync`, находится в **одном окне Footage Sync** с вкладками `Changes · History · Links · Settings` и меню ⋯ окна. Переключение вкладок не создаёт другое окно. Кнопки Main Panel открывают окно на своей вкладке (§10). Поверх окна открываются фокусные диалоги:
+
+- `Add link` (§7) и `Edit link…`;
+- `New link` — превью новой связи (§9);
+- `Exclude subfolders` (§8);
+- `Ignored files and folders` и Ignore файла/папки (§11);
+- Add markers flow (§16);
+- выбор import project / sequence (§19);
 - error/conflict details, когда требуется решение пользователя.
-
-Links и Settings — два views одного management window с общим header и navigation tabs. `Links` открывает window на Links view. Прямой entry point в Settings с Main Panel отсутствует.
 
 ### 15.1 Main Panel
 
-Показывает только три масштабируемые icon actions без постоянных подписей: `Links`, `Sync`, `Status`. Layout, header и sizing определены в §10 и UI_SPEC UI-01.
+Показывает только три масштабируемые icon actions без постоянных подписей: `Links`, `Sync`, `Status`. Layout, header, sizing и badge определены в §10 и UI_SPEC UI-01.
 
-- `Links` открывает Links window;
-- `Sync` сразу применяет changes без dialog, если blocking items отсутствуют; при blocking items открывает Review Changes;
-- `Status` открывает Status window, показывает числовой pending badge и дополнительный attention state.
+- `Links` открывает окно Footage Sync на вкладке Links;
+- `Sync` сразу применяет changes без dialog, если items, требующих решения, нет; иначе открывает вкладку Changes;
+- `Status` открывает вкладку Changes и показывает числовой badge и дополнительный attention state.
 
-Links и Status открывают новые окна; Sync является direct action. Ни один screen не подменяет содержимое Main Panel.
+Ни один screen не подменяет содержимое Main Panel.
 
-### 15.2 Create Link — existing bin
+### 15.2 Add link
 
-Modal содержит:
+См. §7. Default flags: `Path relative to the project` — Off; `Include subfolders` — On.
 
-- Premiere bin field + `Choose…`;
-- system folder field + `Browse…`;
-- per-link flags `Relative path` и `Include subfolders`;
-- пояснение, что disk является source of truth и matching media переиспользуется;
-- `Cancel` / `Analyze link`.
+### 15.3 Links
 
-Default flags:
-
-- `Relative path` — Off;
-- `Include subfolders` — On.
-
-### 15.3 Create matching bins — filesystem tree
-
-Wide modal содержит searchable filesystem tree с multi-select checkboxes и destination bin в Premiere.
-
-Каждая выбранная top-level folder создаёт отдельный Link. Перед изменением проекта пользователь переходит к Initial Sync.
-
-### 15.4 Links Manager
-
-Links Manager является Links view отдельного wide Links / Settings management window.
-
-Каждый link показывает:
-
-- Premiere bin/path;
-- system folder path;
-- `Relative path`;
-- `Subfolders`;
-- status `Active` / `Paused`;
-- действия edit, pause/resume и remove.
-
-Semantics:
+См. §8. Semantics флагов:
 
 - `Relative path` хранит system folder path относительно файла Premiere project, чтобы link переносился вместе с project template;
 - `Subfolders` включает recursive sync и зеркалирование вложенных folders в bins; Off синхронизирует только файлы непосредственно в linked folder.
 
 `SEQ` и `FLT` отсутствуют.
 
-### 15.5 Initial Sync
+### 15.4 New link preview (Initial Sync)
 
-Wide modal показывает:
+См. §9.
 
-- mapping Premiere bin ↔ system folder;
-- какие existing bins/items будут reused;
-- какие bins будут созданы;
-- already imported / to import / duplicate counts;
-- `Cancel` / `Link & Sync`.
+### 15.5 Changes
 
-### 15.6 Review Changes
+См. §11. Fragmented MP4 в режиме `Ask in Review` показывает decision внутри Changes, а не отдельный popup на каждый файл.
 
-Batch review группирует safe changes и blocking items. Если в batch есть blocking item, до user confirmation ничего из batch не применяется. Пользователь выбирает applicable safe changes, решает blocking items и один раз подтверждает batch.
+### 15.6 History
 
-Fragmented MP4 с mode `Ask before fixing` показывает decision внутри Review, а не отдельный popup на каждый файл.
+[LOCKED — user decision 2026-11-06] History — средство проверки, без действий: всё ли синхронизировалось, а если нет — что пошло не так. Список запусков (время, тип запуска, число изменений или причина сбоя) и изменения выбранного запуска раскрывающимися группами (New files, New bins, Renamed and moved, Clip markers) до отдельных файлов. Для неудачного запуска сверху показано, что пошло не так и на каком этапе. Нерешённое, неприменённое и предупреждения в History не показываются: всё ожидающее остаётся во вкладке Changes. Метрики прежнего Status не дублируются. Композиция — UI_SPEC UI-03.
 
 ### 15.7 Settings
 
-Settings является Settings view того же wide Links / Settings management window.
-
-Settings доступен только через `Settings` tab в header Links/Settings window; отдельной кнопки Settings на Main Panel нет.
+[LOCKED — user decision 2026-11-06] Вкладка Settings окна Footage Sync; отдельной кнопки Settings на Main Panel нет. Изменения сохраняются сразу (`Saved automatically`), кнопки `Save`/`Cancel` нет.
 
 Содержит:
 
-- global Sync mode: AUTO / ASK / MANUAL;
-- global Fragmented MP4 behavior;
-- global Source clip markers: автопоиск TXT и применение во время Sync, default On;
-- notification behavior.
+- `Apply changes`: `When I press Sync` (Recommended) / `Automatically` (§6);
+- `Fragmented MP4`: `Ask in Review` / `Import original as is` / `Repair before import` (§12);
+- `Clip markers`: `Find a marker TXT next to each video`, default On (§16);
+- `Notifications`: `Notify after a successful automatic sync`, default Off. Warnings и errors показываются всегда и не отключаются.
 
-Defaults:
+Defaults: `When I press Sync`; `Ask in Review`; маркеры On; AUTO не показывает success popups.
 
-- Sync mode — ASK для prototype/reference state;
-- Fragmented MP4 — `Ask before fixing`;
-- AUTO не показывает success popups;
-- warnings/errors показываются явно.
+### 15.8 Current process, errors and unavailable folders
 
-### 15.8 Status / history / errors
+[LOCKED — user request 2026-10-15] Во время анализа/импорта подробности процесса доступны сразу и обновляют текущий этап, обрабатываемый файл/путь, доступные счётчики, прошедшее время и ошибки/предупреждения текущего процесса. Длительное ожидание host/filesystem показывается с последним известным этапом; неизвестный процент не выдумывается. Закрытие окна не останавливает Sync. Детали завершившегося/ошибочного процесса остаются доступны после тихого polling до следующей явной операции или актуального предупреждения/ошибки. [LOCKED — 2026-11-06] Текущий процесс показывается во вкладке Changes, завершённые — в History.
 
-Status открывается в отдельном window и объединяет:
-
-- current sync status;
-- manual `Sync now` / `Review changes` actions;
-- active links / pending / conflict counters;
-- sync history;
-- conflicts, warnings и unavailable folders.
-
-Conflicts и offline media попадают в Review/details и не исправляются автоматически без решения пользователя.
+Conflicts и offline media попадают в Changes/details и не исправляются автоматически без решения пользователя.
 
 Если linked folder unavailable:
 
@@ -587,8 +579,9 @@ Conflicts и offline media попадают в Review/details и не испра
 [LOCKED — user decisions, 2026-10-03]
 
 - Автопоиск включён по умолчанию, настройка global для проекта. TXT должен лежать в той же папке; весь basename TXT (без расширения) должен содержаться в basename MP4 в любом месте. Сравнение без учёта регистра; _repack обрабатывается этим же правилом. Например яблоко.txt → яблоко банан.mp4, яблоко 2.mp4, 2 яблоко.mp4. Это буквальная подстрока, без угадывания склонений. Несколько кандидатов: предупреждение и ручной выбор, без автоматического применения.
-- Маркеры применяются вместе с Sync в AUTO / ASK / MANUAL согласно общим правилам. Сначала импорт/reconciliation media, затем маркеры source item. TXT, появившийся позже, также обрабатывается при Sync.
-- Ручной TXT имеет приоритет над автопоиском. Выбор доступен в строке media в Initial Sync / Review (кнопка и ПКМ) и в списке уже импортированного media в Status. Main Panel сохраняет Links / Sync / Status.
+- Маркеры применяются вместе с Sync в обоих режимах (§6) согласно общим правилам. Сначала импорт/reconciliation media, затем маркеры source item. TXT, появившийся позже, также обрабатывается при Sync.
+- [LOCKED — user request 2026-10-15] Ручной TXT имеет приоритет над автопоиском. Порядок: native TXT picker → выбор целевого source clip с попыткой автоподстановки по имени → подтверждение клипа. Неоднозначное совпадение не выбирается молча; можно вручную выбрать другой клип. Отмена на любом шаге не меняет назначение TXT. Назначение применяется при Sync по прежним правилам Changes: Replace/Append/Skip. Main Panel сохраняет Links / Sync / Status.
+- [LOCKED — user decision 2026-11-06, supersedes the `Add markers…` button in Initial Sync / Review / Status] Постоянной кнопки нет. `Add markers from TXT…` находится в двух местах: в меню ⋯ окна Footage Sync (полный порядок выше, для клипов, уже находящихся в проекте) и в меню ⋯ строки клипа в Changes (клип уже известен: TXT picker → подтверждение). Flow открывается поверх Changes и не сбрасывает принятые решения.
 - Обычный повторный Sync с последним обработанным TXT не создаёт дублей и сохраняет ручные правки/удаления маркеров. Изменённый TXT или повторный ручной выбор требуют Review: Replace markers / Add to existing / Skip TXT. Replace явно удаляет все маркеры только этого source clip, включая ручные; Append их сохраняет. Skip запоминает решение для этой версии TXT.
 - Неверные строки, цвета, недоступный TXT, неоднозначный выбор и время вне длительности исходного media: точное предупреждение с именем TXT и номером строки где применимо; весь TXT пропускается до исправления. Импорт самого media может продолжаться. Ошибка TXT не превращается в общий blocking media conflict.
 - Незавершённый или отменённый импорт требует Review. Записи об импорте должны согласованно сохраняться/отменяться с project markers. Autosave пользовательского проекта не вводится.
@@ -612,3 +605,23 @@ Source marker create/read/color проверены на generated WAV и MP4, в
 Сохранённые пары folder ↔ bin должны предлагаться другим участникам Production, но не навязываться: обнаружение чужих настроек само по себе не включает sync и не импортирует media. Требуется возможность принять настройки после review. Стараемся не создавать дополнительные файлы в Production; предпочтительное место общего набора — внутри `.prproj`.
 
 [SPIKE] Private Project Item metadata поддерживается на baseline 25.6 и уже используется для marker receipts. Конкретный root/bin anchor, persistence у другого участника и Production locks требуют отдельной host-проверки. Текущий v0.1 продолжает использовать sidecar; переход и новые UI controls пока не реализованы. Общий profile и локальные принятые настройки/служебное состояние не должны автоматически заменять друг друга.
+
+## 19. Import project and Footage sequence
+
+[LOCKED — user request and answers 2026-10-27]
+
+- Пользователь явно выбирает и сохраняет две независимые цели: проект, владеющий bins/media (обычно `…_Footage.prproj`), и проект/секвенцию для раскладки (обычно `…_Selects.prproj → Footage`). Они могут находиться в одном проекте. Смена активной вкладки не меняет выбранные цели. Недоступный import project останавливает импорт; другой активный проект не используется как fallback. [LOCKED — user request 2026-10-28] Проблема с секвенцией не блокирует доступный media import: Review позволяет продолжить только импорт файлов, пропустив раскладку этого пакета. [LOCKED — user decision 2026-11-06] В Changes это снятие группы `Add new videos to timeline` для всего пакета или `Import without adding to timeline` в меню ⋯ строки для одного файла; сохранённая цель и галочка не сбрасываются.
+- [LOCKED — user decision 2026-11-06] Цели импорта показываются тихой строкой: в строке статуса Changes (`Into <project> → <sequence>`) и над таблицей Links (project, переключатель добавления новых видео в секвенцию, sequence, `Change…`). Изменение — через `Change…` в Links или `Change import project or timeline…` в меню ⋯ окна. Пока цель в порядке, она не выглядит как блок, требующий действия; если import project не открыт или секвенция недоступна, цель появляется строкой в `Needs you` с действием выбора.
+- [LOCKED — user request 2026-11-04] Если native объект выбранного import project стал недействительным, плагин повторно ищет этот же сохранённый путь при штатном опросе каждые 5 секунд (когда нет выполняющегося Sync/модального flow). Выбор и настройки сохраняются. Возврат проекта восстанавливает работу без ручного выбора; открытие другого проекта не подменяет цель. Плагин не закрывает/не открывает проекты автоматически. Reopen/изменение identity по-прежнему требует свежего анализа перед мутацией.
+- Выбор import project локально запоминается между сеансами; links/settings принадлежат этому проекту. Выбор секвенции относится к его настройкам. До явного выбора import project синхронизация не меняет проект. [LOCKED — user request 2026-10-28] Рядом с секвенцией есть сохраняемая галочка импорта в секвенцию для новых синхронизаций. Выключение не забывает цель и не меняет существующий монтаж. Видео, импортированные с выключенной галочкой, не добавляются задним числом при включении. Ранее сохранённые pending appends при выключении приостанавливаются.
+- Впервые импортируемые видео добавляются целиком в конец выбранной секвенции: V1, исходный звук начиная с A1. Внутри пакета порядок — дата, затем имя файла. Ранее импортированные клипы автоматически не заполняют секвенцию задним числом. Existing монтаж не перестраивается; обычный повтор не добавляет клипы повторно.
+- [LOCKED — user request 2026-10-28] Добавление футажа и Type Tool зависит от выбранного/разрешённого импорта исходного файла. Неразрешённый fragmented MP4 или снятая галочка его импорта отключают зависимый append в Review. После Import original и выбора файла append становится доступен. Уже импортированный источник и подтверждение выполненного receipt повторного media import не требуют. Отсутствие источника после import должно давать явную проблему, а не тихое завершение без вставки.
+- Дата берётся из имени папки с датой, включая dated ancestor папки футажа. [LOCKED — user request 2026-10-28] Если распознать дату не получилось, Type Tool использует буквальное имя непосредственной папки файла. Дата файла/сегодняшняя дата не подставляются. Проверка выполняется отдельно для каждого видео: ошибка одного не помечает остальные файлы ошибочными и не блокирует их media import.
+- На V2 располагается редактируемый native Type Tool с датой или fallback именем папки. Желательно один титр на одинаковую подпись в непрерывном блоке. Проверенный managed титр в конце того же блока продлевается для поздних клипов с той же подписью. Если титр нельзя надёжно найти или между блоками другая подпись, допустим новый титр. Старый титр не растягивается поверх кадров других дат ради формального ограничения количества.
+- [LOCKED — user request 2026-11-04] Имя нового Type Tool клипа — буквальное имя папки футажа, без Footage Sync prefix. Подпись даты/папки внутри Type Tool остаётся прежней. При продолжении того же блока сохраняется один титр; старое managed имя с prefix распознаётся по receipt и при продлении переименовывается. Остальной монтаж и пользовательские названия не переименовываются массово.
+- Незавершённое добавление сохраняется как pending intent. Неопределённый результат, Undo или отсутствующая после reopen служебная запись требуют общего Review; автоматическое дублирование не допускается. Пользователь может сохранить текущую секвенцию или явно повторить добавление; существующее в V1 медиа не дублируется при retry.
+- Пользовательские проекты не autosave. Исходные media не переписываются; правила clip markers из §16 сохраняются. Production locks не обходятся. Host acceptance описывается отдельно от product contract.
+
+[LOCKED — user request and answer 2026-11-04, supersedes manual step 2026-10-28] При добавлении новых видео в секвенцию автоматически применяется Fill Frame. Пользователь разрешил собственное масштабирование при проверенном совпадении со штатным Fill Frame. Пропорции сохраняются, кадр заполняется целиком с обрезкой излишка; учитываются размеры и pixel aspect ratio media/sequence. Применяется только к новым V1 clips, без изменения существующего монтажа, V2 Type Tool и звука. Дополнительный native модуль не требуется. Native comparison и ограничения описываются отдельно в STATE/acceptance.
+
+[LOCKED — user confirmation 2026-10-27] Пользовательские папки используют `YYYY-MM-DD`. [VALIDATED — current implementation] Parser распознаёт этот формат, включая суффиксы вроде `2026-10-27-Developer`. Другие форматы не входят в текущий согласованный scope; неоднозначные day/month не угадываются.

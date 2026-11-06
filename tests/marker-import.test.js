@@ -10,7 +10,7 @@ function setup(){
   const collection={getMarkers:()=>values.slice(),createAddMarkerAction:(n,t,start)=>{assert.ok(locked);return ()=>values.push(marker(n,start.seconds));},createRemoveMarkerAction:m=>{assert.ok(locked);return ()=>{values=values.filter(v=>v!==m);};}};
   const State={read:async()=>({ledger:structuredClone(ledger)}),timing:async()=>({start:3600,duration:300}),prepare:async(_,next)=>()=>{assert.ok(locked);if(failMetadata)throw Error("metadata failure");return ()=>{ledger=structuredClone(next);};}};
   State.verify=async(_,expected)=>JSON.stringify(ledger)===JSON.stringify(expected);
-  const ppro={ClipProjectItem:{cast:()=>item},Markers:{getMarkers:async()=>collection},Project:{getActiveProject:async()=>active},TickTime:{createWithSeconds:seconds=>({seconds})}};
+  const ppro={ClipProjectItem:{cast:()=>item},Markers:{getMarkers:async()=>collection},Project:{getProject:async()=>active,getActiveProject:async()=>active},TickTime:{createWithSeconds:seconds=>({seconds})}};
   const filename=path.resolve("plugin/host/marker-import.js"),mod={exports:{}};
   const describe=m=>({seconds:m.seconds,ticks:m.getStart().ticks,color:m.color,name:m.name,comments:m.comments,duration:m.duration,type:m.type});
   vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="premierepro"?ppro:id==="./marker-state"?State:id==="./markers"?{describe}:require(path.resolve("plugin/host",id)),mod,mod.exports);
@@ -40,7 +40,7 @@ test("manually edited pending marker cannot be removed by Skip",async()=>{
   await x.host.apply(x.project,x.item,x.source(),"skip");assert.equal(x.values.length,2);assert.equal(x.values[0].seconds,80);assert.equal(x.ledger.pending,undefined);
 });
 test("review snapshot and same-path project reopen prevent any marker transaction",async()=>{
-  const x=setup();await assert.rejects(()=>x.host.apply(x.project,x.item,x.source(),"append","outdated"),/changed after review/);x.switch();await assert.rejects(()=>x.host.apply(x.project,x.item,x.source()),/active project changed/);assert.equal(x.values.length,0);
+  const x=setup();await assert.rejects(()=>x.host.apply(x.project,x.item,x.source(),"append","outdated"),/changed after review/);x.switch();await assert.rejects(()=>x.host.apply(x.project,x.item,x.source()),/source project changed/);assert.equal(x.values.length,0);
 });
 test("out-of-duration row rejects all markers before staging",async()=>{
   const x=setup();await assert.rejects(()=>x.host.apply(x.project,x.item,x.source([{seconds:300,color:1}])));assert.equal(x.values.length,0);

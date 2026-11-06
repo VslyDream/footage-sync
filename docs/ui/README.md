@@ -1,16 +1,25 @@
 # UI golden images
 
-This directory stores the approved PNG references listed in [`../UI_SPEC.md`](../UI_SPEC.md).
+This directory stores the visual references listed in [`../UI_SPEC.md`](../UI_SPEC.md).
 
-Four user-supplied screenshots were saved unchanged on 2026-10-02:
+## Current target — `redesign-2026-11/`
 
-- [Main Panel](main-panel.png)
-- [Links](links.png)
-- [Settings](settings.png)
-- [Status](status.png)
+The UI redesign approved by the user on 2026-11-06. Each screen has two files with the same name:
 
-Links, Settings and Status retain their golden-reference role, subject to textual extensions in `UI_SPEC.md`. Main Panel is a preserved previous-design reference: FUT-002 was approved on 2026-10-06 and supersedes its header, labels and layout. Supplemental Premiere 25.6.2 implementation captures: [vertical](main-panel-vertical.jpg), [horizontal](main-panel-horizontal.jpg), [compact docked](main-panel-docked.jpg). These capture the default state and native chrome; they are not a new user-approved golden screenshot. Remaining state/keyboard/DPI checks are recorded in [acceptance](../../artifacts/panel-host-test/ACCEPTANCE.md). Other modals and state variants are described in `UI_SPEC.md`; they have no separate golden PNG.
+- `*.png` — golden composition and density (headless Chrome, 1×);
+- `*.html` — the static markup/CSS the PNG was rendered from. Open it in a browser to read exact copy, structure and style values. No runtime or network is needed. It is a design artifact, not production code.
 
-Read the prototype-content caveats in `UI_SPEC.md` before implementing Settings or Status. Mock counts and stale helper copy do not override `SPEC.md`.
+Content is mock data. `UI_SPEC.md` lists which screen each image covers. Every screen of the redesign has an image; only the Add markers TXT/clip chooser, project/sequence pickers and generic error details remain text-defined.
+
+## Previous references
+
+Files directly in this directory describe the pre-redesign UI and are no longer the target layout:
+
+- 2026-10-02 user-supplied screenshots: [Main Panel](main-panel.png), [Links](links.png), [Settings](settings.png), [Status](status.png);
+- FUT-002 runtime captures of the current panel: [vertical](main-panel-vertical.jpg), [horizontal](main-panel-horizontal.jpg), [compact docked](main-panel-docked.jpg);
+- implementation captures: [compact targets](links-targets-compact.png), [previous targets card](links-targets.png), [Settings ignore entry](settings-ignore.png), [ignore list](ignored-paths.png), [ignore scope](ignore-path.png);
+- [workflow-refresh.html](workflow-refresh.html) — browser fixture of the current runtime UI.
+
+They stay as history and as a picture of the current implementation until the redesign ships.
 
 The `reference/` subdirectory contains the original Watchtower examples. Those files are visual inspiration only and are not Footage Sync golden screens.

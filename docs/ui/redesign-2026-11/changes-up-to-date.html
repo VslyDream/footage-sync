@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Changes tab — up to date</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.hdr{flex:none;display:flex;align-items:center;height:46px;background:#29292d;border-bottom:1px solid #3a3a3e;padding:0 10px 0 16px}
+.brand{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#203b49;border:1px solid #3983a4;border-radius:4px;color:#8ed8f8;font-size:10px;margin-right:18px}
+.tab{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px;color:#a0a0a6;background:none;border:0;border-bottom:2px solid transparent;font:inherit;font-size:14px}
+.tab.on{color:#fff;border-bottom-color:#3088f1}
+.wmore{margin-left:auto;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:#3a3a40;padding:0}
+.strip{flex:none;display:flex;align-items:center;gap:6px;padding:8px 20px;border-bottom:1px solid #36363a;font-size:12px;color:#8f8f96}
+.strip .v{color:#c4c4c9}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12px;padding:2px 4px}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:14px 20px;overflow:hidden}
+.sh{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b0b0b6;margin-bottom:6px}
+.sh .r{text-transform:none;letter-spacing:0;font-weight:400;color:#9a9aa0}
+.cnt{display:inline-block;min-width:20px;text-align:center;padding:1px 7px;border-radius:9px;background:#333338;color:#e0e0e4;font-size:11px;font-weight:700;letter-spacing:0}
+.cnt.amb{background:#5a4320;color:#ffd68f}
+.dot{width:8px;height:8px;border-radius:50%;background:#e0a145;display:inline-block;flex:none}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22;overflow:hidden}
+.drow{display:flex;align-items:center;gap:12px;padding:6px 10px 6px 12px;border-bottom:1px solid #333337;min-height:46px}
+.drow:last-child{border-bottom:0}
+.mark{width:14px;flex:none;display:flex;justify-content:center}
+.dt{flex:1;min-width:0}
+.dt strong{display:block;font-weight:600}
+.m2{color:#9a9aa0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m2.warn{color:#e3bd7c}
+.seg{display:inline-flex;border:1px solid #55555a;border-radius:4px;overflow:hidden;flex:none}
+.seg button{background:#2b2b2f;color:#ddd;border:0;border-right:1px solid #55555a;padding:5px 10px;font:inherit;font-size:12px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#1473e6;color:#fff}
+.seg.sm button{padding:2px 8px;font-size:11px}
+.seg.sm button.on{background:#3d4a5c;color:#fff}
+.small{height:26px;padding:0 12px;border-radius:13px;font:inherit;font-size:12px;font-weight:600;background:transparent;border:1px solid #6a6a70;color:#d0d0d4;flex:none}
+.exp{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:#9ccaff;font:inherit;font-size:11.5px;padding:2px 0;flex:none}
+.grow{display:flex;align-items:center;gap:10px;padding:0 12px;height:34px;border-bottom:1px solid #333337}
+.grow:last-child{border-bottom:0}
+.tg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:#e8e8e8;font:inherit;padding:0}
+.gt{font-weight:600}
+.gd{margin-left:auto;display:flex;align-items:center;gap:8px;color:#9a9aa0;font-size:11px;white-space:nowrap}
+.chip{flex:none;font-size:10px;padding:1px 6px;border-radius:3px;background:#3a2f1c;color:#e9c27f}
+.note{display:flex;align-items:center;gap:8px;color:#9a9aa0;font-size:11.5px;padding:8px 2px 0}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.menu{position:absolute;right:10px;top:72px;width:290px;background:#2e2e33;border:1px solid #55555b;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0;z-index:2}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:7px 12px}
+.menu button.hov{background:#1473e6;color:#fff}
+.menu .k{display:block;font-size:11px;color:#9a9aa0}
+.menu button.hov .k{color:#dbe9ff}
+.menu hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:6px}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.wmore{background:transparent}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#9a9aa0;font-size:12.5px;text-align:center}
+.empty .ic{width:36px;height:36px;border-radius:50%;background:#1f3328;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.empty strong{font-size:18px;color:#ececf0;font-weight:400}
+
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 1040px; height: 440px">
+  <div class="os"><span>Footage Sync</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="hdr">
+    <span class="brand" aria-hidden="true">FS</span>
+    <button class="tab on" aria-current="page">Changes</button>
+    <button class="tab">History</button>
+    <button class="tab">Links</button>
+    <button class="tab">Settings</button>
+    <button class="wmore" aria-label="More"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="8" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="13" cy="8" r="1.4" fill="#e0e0e4"></circle></svg></button>
+  </div>
+  <div class="strip" role="status">Into <span class="v">Expedition_S02_Footage.prproj</span> → <span class="v">Selects / Footage</span> · last sync today 18:42 · 3 links active<button class="qbtn" style="margin-left: auto">Check now</button></div>
+  <div class="main">
+    <div class="empty" role="status">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#5fd08f" stroke-width="1.8"></path></svg></span>
+      <strong>Up to date</strong>
+      <span>Nothing on disk is waiting. New files show up here as soon as they are found.</span>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn sec">Close</button>
+  </div>
+</div>
+</body>
+</html>

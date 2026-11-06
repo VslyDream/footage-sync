@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Ignored files and folders</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.body{flex:1;min-height:0;padding:18px 22px;overflow:hidden;display:flex;flex-direction:column;gap:16px;position:relative}
+.step{display:flex;align-items:center;gap:8px;font-weight:600;color:#ececf0;margin-bottom:8px}
+.num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#2f3e52;color:#bcd8ff;font-size:11px;font-weight:700}
+.frow{display:flex;align-items:center;gap:8px}
+.tf{flex:1;height:32px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:14px}
+.m{color:#9a9aa0;font-size:11.5px;margin-top:6px}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22}
+.opt{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;padding:10px 12px;border-bottom:1px solid #333337}
+.opt:last-child{border-bottom:0}
+.opt.sel{background:#212c3b}
+.ol{display:flex;align-items:center;gap:8px}
+.res{grid-column:2;display:flex;align-items:center;gap:8px;margin-top:6px;color:#9a9aa0;font-size:11.5px}
+.res b{color:#c9c9ce;font-weight:600}
+.pick{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;background:#2b2b2f;border:1px solid #55555a;border-radius:4px;color:#e2e2e6;font:inherit;font-size:12px}
+.pick.open{border-color:#4b9cf5}
+.ok{font-size:11px;color:#8fe0b5;background:#203229;border-radius:3px;padding:1px 7px}
+.dd{display:none}
+.dd button{display:flex;align-items:center;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:6px 12px}
+.dd button.on{background:#1473e6;color:#fff}
+.dd hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.dd .ck{margin-left:auto}
+.cko{display:inline-flex;align-items:center;gap:8px;margin-right:22px;color:#d6d6d6}
+.cko .m{margin:0 0 0 2px}
+input[type=radio]{accent-color:#4b9cf5;width:14px;height:14px;margin:2px 0 0;flex:none}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600;flex:none}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.body{gap:12px}
+.lead{color:#a5a5aa;font-size:12px;margin:0;line-height:1.45}
+.tools{display:flex;align-items:center;gap:8px}
+.tools .tf{flex:none;width:280px;height:30px;font-size:12.5px}
+.tools .btn{margin-left:auto;height:30px;font-size:13px}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) 140px 150px 64px;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid #2f2f33}
+.tr:last-child{border-bottom:0}
+.th{font-size:10px;letter-spacing:.06em;color:#8f8f96;background:#1c1c1f;padding-top:6px;padding-bottom:6px}
+.pth{min-width:0}
+.pth strong{display:block;font-weight:600}
+.pth span{display:block;color:#9a9aa0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc{font-size:12px;color:#c9c9ce}
+.fr{font-size:11.5px;color:#9a9aa0}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12.5px;padding:0;text-align:right}
+
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 760px; height: 480px">
+  <div class="os"><span>Ignored files and folders</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="body">
+    <p class="lead">Hidden from Sync, Changes and badges until restored. Folder rules include subfolders and files added later. Items already in Premiere stay as they are; Restore checks the path again on the next scan.</p>
+    <div class="tools"><input class="tf" type="text" aria-label="Filter ignored paths" placeholder="Filter"><button class="btn sec">Add path…</button></div>
+    <div class="box" role="table" aria-label="Ignored paths">
+      <div class="tr th" role="row"><span>PATH</span><span>SCOPE</span><span>FROM</span><span></span></div>
+        <div class="tr"><div class="pth"><strong>_renders</strong><span>D:/Shoots/Expedition_S02/_renders</span></div><span class="sc">Folder and subfolders</span><span class="fr">Footage/Video · excluded</span><button class="qbtn">Restore</button></div>
+        <div class="tr"><div class="pth"><strong>_proxy</strong><span>D:/Shoots/Expedition_S02/2026-11-03/_proxy</span></div><span class="sc">Folder and subfolders</span><span class="fr">Footage/Video · excluded</span><button class="qbtn">Restore</button></div>
+        <div class="tr"><div class="pth"><strong>A001_C017_broken.mp4</strong><span>D:/Shoots/Expedition_S02/2026-11-01/CamA/A001_C017_broken.mp4</span></div><span class="sc">File</span><span class="fr">Ignored in Changes</span><button class="qbtn">Restore</button></div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="hint">Saved automatically</span>
+    <button class="btn sec">Close</button>
+  </div>
+</div>
+</body>
+</html>

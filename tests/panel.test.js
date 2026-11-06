@@ -44,7 +44,7 @@ test("blocking/error/warning preserves numeric count and exposes separate attent
 });
 test("spinner advances only while busy and stops on completion, failure, hidden size and destruction",()=>{
   const x=setup();assert.equal(x.timers.size,0);
-  x.state.busy=true;x.panel.update(x.state);assert.equal(x.timers.size,1);assert.equal(x.sync.disabled,true);assert.equal(x.spinner.style.display,"block");
+  x.state.busy=true;x.panel.update(x.state);assert.equal(x.timers.size,1);assert.equal(x.sync.disabled,false);assert.match(x.sync.attrs.title,/click for details/);assert.equal(x.spinner.style.display,"block");
   const first=x.dots.map(d=>d.attrs.fill);[...x.timers.values()][0]();assert.notDeepEqual(x.dots.map(d=>d.attrs.fill),first);
   x.panel.update(x.state);assert.equal(x.timers.size,1);
   x.panel.resize(0,0);assert.equal(x.timers.size,0);

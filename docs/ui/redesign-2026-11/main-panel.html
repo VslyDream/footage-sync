@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Main Panel — variant A</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8}
+.fs *{box-sizing:border-box}
+.pnl{position:absolute;background:#232323;border:1px solid #0f0f0f;overflow:hidden}
+.tabbar{height:24px;background:#1b1b1b;border-bottom:1px solid #2d2d2d;display:flex;align-items:center;padding:0 4px;font-size:11px;color:#d6d6d6;white-space:nowrap;overflow:hidden}
+.acts{display:flex;flex-direction:column}
+.ma{position:relative;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid transparent;border-radius:4px;background:transparent;flex:none}
+.ma.att{border-color:#967137}
+.ma.att2{border-color:#c69040;background:#2c251a}
+.badge{position:absolute;top:0;right:0;padding:1px 3px;border-radius:7px;background:#30475f;color:#c2dfff;font-size:10px;line-height:1.2;font-weight:700}
+.badge.amb{background:#695027;color:#ffd68f}
+.badge.dec{top:auto;bottom:0;right:0;background:#c69040;color:#1c1408}
+.bang{position:absolute;bottom:1px;right:2px;color:#ffd68f;font-weight:700;font-size:10px}
+.sdot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#e0a145}
+.sbar{position:absolute;right:1px;top:25px;bottom:1px;width:4px;border-radius:2px;background:#2f2f33}
+.sbar span{position:absolute;left:0;top:0;width:4px;height:60%;border-radius:2px;background:#6a6a70}
+.cap{position:absolute;width:130px;text-align:center;font-size:12px;line-height:1.35;color:#c8c8cc}
+.cap b{display:block;color:#ededf0;font-weight:600;margin-bottom:2px}
+.tip{position:absolute;left:470px;top:96px;width:260px;background:#f0f0f2;color:#1d1d1f;border-radius:4px;padding:9px 11px;font-size:12px;line-height:1.45;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.tip b{display:block;font-weight:700}
+.tcap{position:absolute;left:470px;top:206px;width:260px;font-size:12px;color:#c8c8cc;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="fs" style="position: relative; width: 760px; height: 440px; background: #191919">
+
+  <div class="pnl" style="left: 260px; top: 30px; width: 54px; height: 288px">
+    <div class="tabbar">Footage S</div>
+    <div class="acts" style="padding: 3px">
+      <button class="ma" aria-label="Links" style="width: 46px; height: 46px; margin-bottom: 2px"><svg aria-hidden="true" width="27" height="27" viewBox="0 0 32 32"><path d="M3 3h18v13H3z M12 16h18v13H12z M12 19l9-9" fill="none" stroke="#bcbec2" stroke-width="1.8"></path></svg></button>
+      <button class="ma" aria-label="Sync — opens Changes: 3 items need you" style="width: 46px; height: 46px; margin-bottom: 2px"><svg aria-hidden="true" width="27" height="27" viewBox="0 0 32 32"><path d="M25 8a12 12 0 1 1-13-3 M5 4h10v10" fill="none" stroke="#bcbec2" stroke-width="2.4"></path></svg><span class="sdot" aria-hidden="true"></span></button>
+      <button class="ma att2" aria-label="Status — 34 changes, 3 need you" style="width: 46px; height: 46px"><svg aria-hidden="true" width="27" height="27" viewBox="0 0 36 36"><path d="M2 18C8 4 28 4 34 18 28 32 8 32 2 18z" fill="none" stroke="#bcbec2" stroke-width="1.8"></path><circle cx="18" cy="18" r="4" fill="#80baff"></circle></svg><span class="badge">34</span><span class="badge dec">3</span></button>
+    </div>
+  </div>
+  <div class="cap" style="left: 222px; top: 330px"><b>Вариант A (выбран)</b>34 без раскладок, 3 требуют решения; точка на Sync = откроет Changes</div>
+
+  <div class="pnl" style="left: 92px; top: 30px; width: 54px; height: 96px">
+    <div class="tabbar">Footage S</div>
+    <div class="acts" style="padding: 3px 9px 3px 3px; align-items: center">
+      <button class="ma" aria-label="Links" style="width: 28px; height: 28px; margin-bottom: 2px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 32 32"><path d="M3 3h18v13H3z M12 16h18v13H12z M12 19l9-9" fill="none" stroke="#bcbec2" stroke-width="2"></path></svg></button>
+      <button class="ma" aria-label="Sync" style="width: 28px; height: 28px; margin-bottom: 2px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 32 32"><path d="M25 8a12 12 0 1 1-13-3 M5 4h10v10" fill="none" stroke="#bcbec2" stroke-width="2.6"></path></svg><span class="sdot" style="top: 2px; right: 2px; width: 6px; height: 6px" aria-hidden="true"></span></button>
+      <button class="ma att2" aria-label="Status — 34 changes, 3 need you" style="width: 28px; height: 28px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 36 36"><path d="M2 18C8 4 28 4 34 18 28 32 8 32 2 18z" fill="none" stroke="#bcbec2" stroke-width="2"></path><circle cx="18" cy="18" r="4" fill="#80baff"></circle></svg><span class="badge" style="font-size: 8px">34</span></button>
+    </div>
+    <div class="sbar" aria-hidden="true"><span></span></div>
+  </div>
+  <div class="cap" style="left: 36px; top: 140px"><b>A при сжатии</b>кнопки не меньше 28 px, дальше прокрутка</div>
+
+  <div class="tip" role="tooltip"><b>Status</b>34 changes waiting · 3 need you<br>1 TXT skipped<br><span style="color: #55555b">Sync opens the Changes tab first</span></div>
+  <div class="tcap"><b style="color: #ededf0">Подсказка к варианту A</b><br>Повторяет то, что покажет вкладка Changes: сколько ждёт и сколько требует решения.</div>
+</div>
+</body>
+</html>

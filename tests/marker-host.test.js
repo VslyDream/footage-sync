@@ -8,7 +8,7 @@ function setup({sequence=false,offline=false}={}) {
   const item={isSequence:async()=>sequence,isOffline:async()=>offline};
   const markers={getMarkers:()=>values.slice(),createAddMarkerAction:(name,type,start,duration,comments)=>{assert.ok(locked);return ()=>values.push(marker(name,start.seconds));}};
   project.lockedAccess=fn=>{locked=true;try{fn();}finally{locked=false;}};project.executeTransaction=fn=>{const actions=[];fn({addAction:a=>actions.push(a)});actions.forEach(a=>a());return true;};
-  const ppro={ClipProjectItem:{cast:x=>{assert.equal(x,item);return item;}},Markers:{getMarkers:async owner=>{assert.equal(owner,item);return markers;}},Project:{getActiveProject:async()=>active},TickTime:{createWithSeconds:seconds=>({seconds})}};
+  const ppro={ClipProjectItem:{cast:x=>{assert.equal(x,item);return item;}},Markers:{getMarkers:async owner=>{assert.equal(owner,item);return markers;}},Project:{getProject:async()=>active,getActiveProject:async()=>active},TickTime:{createWithSeconds:seconds=>({seconds})}};
   const filename=path.resolve("plugin/host/markers.js"),mod={exports:{}};
   vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="premierepro"?ppro:require(path.resolve("plugin/host",id)),mod,mod.exports);
   return {host:mod.exports,project,item,values,marker,snapshots,checkpoint:async receipts=>snapshots.push(JSON.parse(JSON.stringify(receipts))),switchProject:()=>{active={...project,guid:"reopened-project"};},fail:()=>{failFinalize=true;},recover:()=>{failFinalize=false;}};

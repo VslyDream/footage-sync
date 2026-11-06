@@ -7,7 +7,7 @@ function setup(picked){
   const wrapper=vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename});
   wrapper(id=>id==="uxp"?{storage:{localFileSystem:{async getFileForOpening(options){calls.push(options);return picked;}}}}:id==="./host/premiere"?{}:require(id.startsWith(".")?path.resolve("plugin",id):id),mod,mod.exports);
   const ui=new mod.exports.UI(c);let previews=0;
-  ui.modal=async()=>{previews++;return previews===1?{marker:entry}:"cancel";};
+  ui.modal=async title=>{if(title==="Add source clip markers")return entry;previews++;return previews===1?{addMarkers:true}:"cancel";};
   return {ui,c,calls,entry,previews:()=>previews};
 }
 test("Status manual TXT opens the picker, saves the exact clip selection and reopens a fresh Status",async()=>{

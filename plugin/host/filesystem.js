@@ -1,5 +1,5 @@
 "use strict";
-const fsModule=require("fs"), fs=fsModule.promises||fsModule, P=require("../core/paths"), {parseMarkers,signature}=require("../core/markers");
+const fs=require("./io"), P=require("../core/paths"), {parseMarkers,signature}=require("../core/markers");
 const MEDIA=/\.(mp4|mov|m4v|mxf|avi|mkv|webm|mts|m2ts|wav|mp3|aac|m4a|aif|aiff|flac|ogg|png|jpg|jpeg|tif|tiff|psd|exr|bmp)$/i;
 const yieldUI=()=>new Promise(r=>setTimeout(r,0));
 function identity(stat) {
@@ -62,17 +62,31 @@ class Scanner {
       return {...source,...cached};
     }catch(e){return {path:P.clean(path),error:e.message};}
   }
-  async scan(link,projectPath) {
+  async scan(link,projectPath,onProgress,ignored=[]) {
     const root=P.resolve(P.dirname(projectPath),link.folderPath), files=[], dirs=[], txts=[],started=Date.now();
+    const ancestors=new Set();let current=root,checked=0;
+    const Ignore=require("../core/ignore");
+    if(Ignore.matches(root,ignored))return {root,files,dirs,txts,ignored:true,duration:0};
     try {
       const rootStat=await fs.lstat(root); if(!rootStat.isDirectory()) throw new Error("Source is not a folder.");
-      async function walk(scanner,path,rel,stat) {
-        dirs.push({path,rel,identity:identity(stat)});
+      async function walk(scanner,path,rel,stat,depth=0) {
+        current=path;
+        const id=identity(stat);
+        if(id&&ancestors.has(id))throw new Error("Folder scan stopped: the filesystem returned an ancestor folder again.");
+        if(depth>=256)throw new Error("Folder scan stopped: maximum safe nesting depth reached.");
+        if(id)ancestors.add(id);
+        onProgress?.({current:path,completed:files.length,total:null});
+        dirs.push({path,rel,identity:id});
         const entries=await fs.readdir(path);
         for(const name of entries) {
-          const child=P.join(path,name), childRel=P.join(rel,name), st=await fs.lstat(child);
+          if(!name||name==="."||name===".."||/[\\/]/.test(name))throw new Error("Folder scan stopped: invalid directory entry.");
+          const child=P.join(path,name), childRel=P.join(rel,name);
+          if(Ignore.matches(child,ignored))continue;
+          current=child;
+          onProgress?.({current:child,completed:files.length,total:null});
+          const st=await fs.lstat(child);
           if(st.isSymbolicLink && st.isSymbolicLink()) continue;
-          if(st.isDirectory()) { if(link.subfolders) await walk(scanner,child,childRel,st); }
+          if(st.isDirectory()) { if(link.subfolders) await walk(scanner,child,childRel,st,depth+1); }
           else if(st.isFile() && /\.txt$/i.test(name)) txts.push(await scanner.txt(child));
           else if(st.isFile() && MEDIA.test(name)) {
             const mtime=Number(st.mtimeMs || new Date(st.mtime).getTime()), size=Number(st.size), fileIdentity=identity(st), stamp=size+":"+mtime+":"+fileIdentity;
@@ -86,12 +100,13 @@ class Scanner {
             }
             files.push({path:child,rel:childRel,size,mtime,identity:fileIdentity,fragmented:cached.fragmented,issue:cached.issue});
           }
-          if((files.length+dirs.length)%25===0) await yieldUI();
+          if(++checked%25===0) await yieldUI();
         }
+        if(id)ancestors.delete(id);
       }
       await walk(this,root,"",rootStat);
       return {root,files,dirs,txts,duration:Date.now()-started};
-    } catch(e) { return {root,files:[],dirs:[],txts:[],error:e.message,duration:Date.now()-started}; }
+    } catch(e) { return {root,files:[],dirs:[],txts:[],error:e.message+" Path: "+current,duration:Date.now()-started}; }
   }
 }
 module.exports={Scanner,identity,fragmented,boxHeader,MEDIA};

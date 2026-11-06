@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — History tab</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.hdr{flex:none;display:flex;align-items:center;height:46px;background:#29292d;border-bottom:1px solid #3a3a3e;padding:0 10px 0 16px}
+.brand{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#203b49;border:1px solid #3983a4;border-radius:4px;color:#8ed8f8;font-size:10px;margin-right:18px}
+.tab{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px;color:#a0a0a6;background:none;border:0;border-bottom:2px solid transparent;font:inherit;font-size:14px}
+.tab.on{color:#fff;border-bottom-color:#3088f1}
+.wmore{margin-left:auto;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:#3a3a40;padding:0}
+.strip{flex:none;display:flex;align-items:center;gap:6px;padding:8px 20px;border-bottom:1px solid #36363a;font-size:12px;color:#8f8f96}
+.strip .v{color:#c4c4c9}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12px;padding:2px 4px}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:14px 20px;overflow:hidden}
+.sh{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b0b0b6;margin-bottom:6px}
+.sh .r{text-transform:none;letter-spacing:0;font-weight:400;color:#9a9aa0}
+.cnt{display:inline-block;min-width:20px;text-align:center;padding:1px 7px;border-radius:9px;background:#333338;color:#e0e0e4;font-size:11px;font-weight:700;letter-spacing:0}
+.cnt.amb{background:#5a4320;color:#ffd68f}
+.dot{width:8px;height:8px;border-radius:50%;background:#e0a145;display:inline-block;flex:none}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22;overflow:hidden}
+.drow{display:flex;align-items:center;gap:12px;padding:6px 10px 6px 12px;border-bottom:1px solid #333337;min-height:46px}
+.drow:last-child{border-bottom:0}
+.mark{width:14px;flex:none;display:flex;justify-content:center}
+.dt{flex:1;min-width:0}
+.dt strong{display:block;font-weight:600}
+.m2{color:#9a9aa0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m2.warn{color:#e3bd7c}
+.seg{display:inline-flex;border:1px solid #55555a;border-radius:4px;overflow:hidden;flex:none}
+.seg button{background:#2b2b2f;color:#ddd;border:0;border-right:1px solid #55555a;padding:5px 10px;font:inherit;font-size:12px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#1473e6;color:#fff}
+.seg.sm button{padding:2px 8px;font-size:11px}
+.seg.sm button.on{background:#3d4a5c;color:#fff}
+.small{height:26px;padding:0 12px;border-radius:13px;font:inherit;font-size:12px;font-weight:600;background:transparent;border:1px solid #6a6a70;color:#d0d0d4;flex:none}
+.exp{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:#9ccaff;font:inherit;font-size:11.5px;padding:2px 0;flex:none}
+.grow{display:flex;align-items:center;gap:10px;padding:0 12px;height:34px;border-bottom:1px solid #333337}
+.grow:last-child{border-bottom:0}
+.tg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:#e8e8e8;font:inherit;padding:0}
+.gt{font-weight:600}
+.gd{margin-left:auto;display:flex;align-items:center;gap:8px;color:#9a9aa0;font-size:11px;white-space:nowrap}
+.chip{flex:none;font-size:10px;padding:1px 6px;border-radius:3px;background:#3a2f1c;color:#e9c27f}
+.note{display:flex;align-items:center;gap:8px;color:#9a9aa0;font-size:11.5px;padding:8px 2px 0}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.menu{position:absolute;right:10px;top:72px;width:290px;background:#2e2e33;border:1px solid #55555b;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0;z-index:2}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:7px 12px}
+.menu button.hov{background:#1473e6;color:#fff}
+.menu .k{display:block;font-size:11px;color:#9a9aa0}
+.menu button.hov .k{color:#dbe9ff}
+.menu hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:6px}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.wmore{background:transparent}
+.split{flex:1;min-height:0;display:grid;grid-template-columns:330px minmax(0,1fr)}
+.list{border-right:1px solid #36363a;overflow:hidden;display:flex;flex-direction:column}
+.lt{padding:10px 16px 8px}
+.lt .tf{width:100%;height:28px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:12px}
+.day{padding:6px 16px;font-size:10px;font-weight:700;letter-spacing:.06em;color:#8f8f96;background:#1c1c1f;border-top:1px solid #2f2f33;border-bottom:1px solid #2f2f33}
+.hrow{display:grid;grid-template-columns:12px minmax(0,1fr) auto;column-gap:10px;padding:9px 16px;border:0;border-bottom:1px solid #2c2c30;align-items:baseline;background:none;color:inherit;font:inherit;text-align:left;width:100%}
+.hrow.sel{background:#212c3b;box-shadow:inset 3px 0 0 #3088f1}
+.hrow .t{font-weight:600}
+.hrow .s{grid-column:2/4;color:#9a9aa0;font-size:11.5px;margin-top:2px}
+.hrow .s.e{color:#ff8f87}
+.when{color:#8f8f96;font-size:11px;white-space:nowrap}
+.sd{width:8px;height:8px;border-radius:50%;display:inline-block;align-self:center}
+.sd.g{background:#5fd08f}.sd.r{background:#ff6b6b}.sd.n{background:#6a6a70}
+.det{padding:16px 22px;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+.det h2{font-size:18px;font-weight:400;margin:0;color:#f0f0f2}
+.meta{color:#9a9aa0;font-size:12px;margin-top:3px}
+.fold{display:flex;align-items:center;gap:10px;padding:0 12px 0 34px;height:26px;background:#1b1b1e;border-bottom:1px solid #2f2f33;color:#a9a9af;font-size:11px}
+.fold b{color:#cfcfd4;font-weight:600}
+.frow{display:flex;align-items:center;gap:10px;padding:0 12px 0 34px;height:27px;border-bottom:1px solid #2b2b2f;font-size:12.5px}
+.frow .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow.more{color:#9ccaff;font-size:12px}
+.chip.b{background:#28323f;color:#a9c9ef}
+.err{border:1px solid #6b2f2f;background:#2a1d1d;border-radius:6px;padding:12px 14px}
+.err strong{display:block;color:#ffb3ad;font-size:14px;font-weight:600}
+.err p{margin:6px 0 0;color:#d8c9c8;font-size:12.5px;line-height:1.45}
+.err .m{margin-top:8px;color:#a99a99;font-size:11.5px}
+.none{color:#9a9aa0;font-size:12.5px}
+
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 1040px; height: 700px">
+  <div class="os"><span>Footage Sync</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="hdr">
+    <span class="brand" aria-hidden="true">FS</span>
+    <button class="tab"><span class="dot" aria-hidden="true"></span>Changes<span class="cnt amb">4</span></button>
+    <button class="tab on" aria-current="page">History</button>
+    <button class="tab">Links</button>
+    <button class="tab">Settings</button>
+    <button class="wmore" aria-label="More"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="8" cy="8" r="1.4" fill="#e0e0e4"></circle><circle cx="13" cy="8" r="1.4" fill="#e0e0e4"></circle></svg></button>
+  </div>
+  <div class="split">
+    <div class="list" role="listbox" aria-label="Sync history">
+      <div class="lt"><input class="tf" type="text" aria-label="Filter history" placeholder="Find a file or folder"></div>
+      <div class="day">TODAY</div>
+      <button class="hrow sel" role="option" aria-selected="true"><span class="sd g" aria-hidden="true"></span><span class="t">Sync</span><span class="when">18:42</span><span class="s">28 changes</span></button>
+      <button class="hrow" role="option"><span class="sd g" aria-hidden="true"></span><span class="t">Automatic sync</span><span class="when">13:10</span><span class="s">6 changes</span></button>
+      <button class="hrow" role="option"><span class="sd n" aria-hidden="true"></span><span class="t">Automatic sync</span><span class="when">09:02</span><span class="s">Nothing applied · waited in Changes</span></button>
+      <div class="day">YESTERDAY</div>
+      <button class="hrow" role="option"><span class="sd n" aria-hidden="true"></span><span class="t">Sync</span><span class="when">19:05</span><span class="s">No changes</span></button>
+      <button class="hrow" role="option"><span class="sd g" aria-hidden="true"></span><span class="t">New link · Footage/Audio</span><span class="when">16:20</span><span class="s">12 changes · 34 files reused</span></button>
+      <div class="day">2026-11-02</div>
+      <button class="hrow" role="option"><span class="sd r" aria-hidden="true"></span><span class="t">Sync</span><span class="when">11:48</span><span class="s e">Failed · the project is read-only</span></button>
+      <button class="hrow" role="option"><span class="sd g" aria-hidden="true"></span><span class="t">Automatic sync</span><span class="when">10:31</span><span class="s">17 changes</span></button>
+    </div>
+    <div class="det">
+      <div>
+        <h2>Sync · today 18:42</h2>
+        <div class="meta">Started from Changes · 1 min 12 s · Expedition_S02_Footage.prproj → Selects / Footage</div>
+      </div>
+      <section>
+        <div class="sh">Changes<span class="cnt">28</span></div>
+        <div class="box">
+          <div class="grow"><button class="tg" aria-expanded="true"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg><span class="gt">New files</span></button><span class="cnt">19</span><span class="gd">15 video · 4 audio · 15 added to the timeline</span></div>
+          <div class="fold"><b>2026-11-03 / CamA</b><span>8 files</span></div>
+          <div class="frow"><span class="n">A003_C001_1103XK.mp4</span><span class="chip b">+ timeline</span></div>
+          <div class="frow"><span class="n">A003_C002_1103XK.mp4</span><span class="chip b">+ timeline</span></div>
+          <div class="frow"><span class="n">A003_C003_1103XK.mp4</span><span class="chip b">+ timeline</span></div>
+          <div class="frow"><span class="n">A003_C004_1103XK.mp4</span><span class="chip b">+ timeline</span></div>
+          <div class="frow"><span class="n">A003_C005_1103XK.mp4</span><span class="chip b">+ timeline</span></div>
+          <div class="frow more">Show 3 more</div>
+          <div class="fold"><b>2026-11-03 / CamB</b><span>7 files</span></div>
+          <div class="fold"><b>2026-11-03 / Sound</b><span>4 files</span></div>
+          <div class="grow"><button class="tg" aria-expanded="false"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg><span class="gt">New bins</span></button><span class="cnt">4</span><span class="gd">2026-11-03 · CamA · CamB · Sound</span></div>
+          <div class="grow"><button class="tg" aria-expanded="false"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg><span class="gt">Renamed and moved</span></button><span class="cnt">4</span><span class="gd">2 renamed · 1 moved · folder Drone → CamB_Drone</span></div>
+          <div class="grow"><button class="tg" aria-expanded="false"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="#a0a0a6" stroke-width="1.6"></path></svg><span class="gt">Clip markers</span></button><span class="cnt">1</span><span class="gd">7 markers from A002_C014_interview.txt</span></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn sec">Close</button>
+  </div>
+</div>
+</body>
+</html>

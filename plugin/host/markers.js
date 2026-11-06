@@ -22,7 +22,7 @@ async function append(project,item,rows,receipts,checkpoint) {
   if(typeof checkpoint!=="function")throw new Error("A durable marker checkpoint is required.");
   const projectPath=project.path,projectId=String(project.guid),markers=await collection(item);
   async function guard() {
-    const active=await ppro.Project.getActiveProject();
+    const active=await ppro.Project.getProject(project.guid);
     if(!active||P.key(active.path)!==P.key(projectPath)||String(active.guid)!==projectId)throw new Error("The active project changed before importing clip markers.");
   }
   let added=0;const occurrences=new Map();

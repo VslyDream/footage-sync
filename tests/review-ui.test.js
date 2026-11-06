@@ -1,12 +1,13 @@
 "use strict";
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm"),path=require("node:path");
-function setup(actions){
+function setup(actions,extra=[]){
   const applied=[],batch={changes:[{id:"0",kind:"fragmented",path:"D:/a.mp4",blocking:true,message:"Decision needed"},{id:"1",kind:"new-file",path:"D:/b.wav",blocking:false}],media:[]};
   const c={onChange(){},async apply(...args){applied.push(args);}},filename=path.resolve("plugin/ui.js"),mod={exports:{}};
+  batch.changes.push(...extra);
   vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="uxp"||id==="./host/premiere"?{}:require(id.startsWith(".")?path.resolve("plugin",id):id),mod,mod.exports);
   const ui=new mod.exports.UI(c),elements=new Map();
-  for(const id of ["close-x","later","apply","original-0","skip-0","change-0","change-1"]){
-    const handlers={};elements.set(id,{disabled:id==="change-0",checked:id==="change-1",getAttribute:()=>"button",addEventListener:(event,fn)=>handlers[event]=fn,async click(){await handlers.click?.();}});
+  for(const id of ["close-x","later","apply","original-0","skip-0","change-0","change-1","change-2","dependency-2","decision-text-0"]){
+    const handlers={};elements.set(id,{disabled:id==="change-0",checked:["change-1","change-2"].includes(id),getAttribute:()=>"button",addEventListener:(event,fn)=>handlers[event]=fn,async click(){await handlers.click?.();}});
   }
   ui.modal=async(title,html,bind)=>{
     let result;const d={querySelector:selector=>elements.get(selector.slice(1)),close:value=>result=value};
@@ -16,6 +17,19 @@ function setup(actions){
 }
 test("Review Later applies no changes even after an Import original decision",async()=>{
   const x=setup(["original-0","later"]);await x.ui.review(x.batch);assert.equal(x.applied.length,0);
+});
+
+test("Review resolves the media dependency before enabling the footage and title append",async()=>{
+  const extra=[{id:"2",kind:"append-footage",path:"D:/a.mp4"}];
+  const deferred=setup(["skip-0","apply"],extra);await deferred.ui.review(deferred.batch);
+  assert.equal(deferred.elements.get("change-2").disabled,true);assert.equal(deferred.elements.get("change-2").checked,false);
+  assert.match(deferred.elements.get("decision-text-0").textContent,/Deferred for this sync/);assert.deepEqual(deferred.applied[0][1],["1"]);
+  const original=setup(["original-0","apply"],extra);await original.ui.review(original.batch);
+  assert.equal(original.elements.get("change-2").disabled,false);assert.deepEqual(original.applied[0][1],["0","1","2"]);
+});
+
+test("an already completed sequence checkpoint does not require another media import",async()=>{
+  const x=setup(["apply"],[{id:"2",kind:"append-footage",path:"D:/a.mp4",checkpoint:true}]);await x.ui.review(x.batch);assert.deepEqual(x.applied[0][1],["1","2"]);
 });
 test("Review Import original applies only after the single Sync selected confirmation",async()=>{
   const x=setup(["original-0","apply"]);await x.ui.review(x.batch);

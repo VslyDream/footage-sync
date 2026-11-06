@@ -7,9 +7,11 @@ function planSync({ links, scans, inventory, records = {} }) {
   const changes = [], reused = [], next = {}, claimed = new Set();
   const clipsByPath = groupBy(inventory.clips, c => P.key(c.mediaPath));
   const binsByPath = groupBy(inventory.bins, b => b.path);
+  // The project root is an existing destination, never a bin to create/rename.
+  binsByPath.set("",[{id:null,path:""}]);
   const clipById = new Map(inventory.clips.map(c => [c.id, c]));
   const binById = new Map(inventory.bins.map(b => [b.id, b]));
-  const activeLinks=links.filter(l=>!l.paused && scans[l.id] && !scans[l.id].error);
+  const activeLinks=links.filter(l=>!l.paused && scans[l.id] && !scans[l.id].error && !scans[l.id].ignored);
   const allFiles=activeLinks.flatMap(l=>scans[l.id].files);
   const allPaths=new Set(allFiles.map(f=>P.key(f.path)));
   const allIdentities=groupBy(allFiles.filter(f=>f.identity),f=>f.identity);
@@ -19,7 +21,7 @@ function planSync({ links, scans, inventory, records = {} }) {
   const owners=new Map();
   function add(change) { changes.push({ id: String(changes.length), blocking: false, ...change }); }
   for (const link of links) {
-    if (link.paused) continue;
+    if (link.paused || scans[link.id]?.ignored) continue;
     const scan = scans[link.id]; const old = records[link.id] || { files: [], dirs: [] };
     if (!scan || scan.error) { add({ kind: "unavailable", blocking: true, linkId: link.id, path: link.folderPath, message: scan?.error || "Source unavailable" }); continue; }
     next[link.id] = { files: [], dirs: [] };

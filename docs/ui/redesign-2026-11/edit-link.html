@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footage Sync redesign — Edit link</title>
+<!-- Static design reference exported from the 2026-11 design canvas. Contract: docs/UI_SPEC.md. Mock data. -->
+<style>
+body{margin:0;background:#191919}
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.dlg{background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.body{flex:1;min-height:0;padding:18px 22px;overflow:hidden;display:flex;flex-direction:column;gap:16px;position:relative}
+.step{display:flex;align-items:center;gap:8px;font-weight:600;color:#ececf0;margin-bottom:8px}
+.num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#2f3e52;color:#bcd8ff;font-size:11px;font-weight:700}
+.frow{display:flex;align-items:center;gap:8px}
+.tf{flex:1;height:32px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:14px}
+.m{color:#9a9aa0;font-size:11.5px;margin-top:6px}
+.box{border:1px solid #3c3c41;border-radius:5px;background:#1f1f22}
+.opt{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;padding:10px 12px;border-bottom:1px solid #333337}
+.opt:last-child{border-bottom:0}
+.opt.sel{background:#212c3b}
+.ol{display:flex;align-items:center;gap:8px}
+.res{grid-column:2;display:flex;align-items:center;gap:8px;margin-top:6px;color:#9a9aa0;font-size:11.5px}
+.res b{color:#c9c9ce;font-weight:600}
+.pick{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;background:#2b2b2f;border:1px solid #55555a;border-radius:4px;color:#e2e2e6;font:inherit;font-size:12px}
+.pick.open{border-color:#4b9cf5}
+.ok{font-size:11px;color:#8fe0b5;background:#203229;border-radius:3px;padding:1px 7px}
+.dd{display:none}
+.dd button{display:flex;align-items:center;width:100%;text-align:left;background:none;border:0;color:#e4e4e8;font:inherit;font-size:12.5px;padding:6px 12px}
+.dd button.on{background:#1473e6;color:#fff}
+.dd hr{border:0;border-top:1px solid #45454a;margin:4px 0}
+.dd .ck{margin-left:auto}
+.cko{display:inline-flex;align-items:center;gap:8px;margin-right:22px;color:#d6d6d6}
+.cko .m{margin:0 0 0 2px}
+input[type=radio]{accent-color:#4b9cf5;width:14px;height:14px;margin:2px 0 0;flex:none}
+input[type=checkbox]{accent-color:#c8c8c8;width:14px;height:14px;margin:0;flex:none}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600;flex:none}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.chg{display:inline-block;margin-left:6px;font-size:10px;padding:1px 6px;border-radius:3px;background:#28323f;color:#a9c9ef}
+.ex{display:flex;align-items:center;gap:10px;color:#c9c9ce;font-size:12.5px;margin-top:12px}
+.ex .m{margin:0}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12.5px;padding:0}
+
+</style>
+</head>
+<body>
+<div class="fs dlg" style="width: 760px; height: 560px">
+  <div class="os"><span>Edit link</span><button class="os-x" aria-label="Close window">✕</button></div>
+  <div class="body">
+    <section>
+      <div class="step"><span class="num">1</span>Folder on disk<span class="chg">changed</span></div>
+      <div class="frow"><input class="tf" type="text" aria-label="Folder on disk" value="F:/Drone_Backup/DCIM"><button class="btn sec">Browse…</button></div>
+      <div class="m">Was E:/Drone_SSD/DCIM · 1 subfolder · 64 media files, all with the same names as in the old folder</div>
+    </section>
+    <section>
+      <div class="step"><span class="num">2</span>Premiere bin</div>
+      <div class="frow"><button class="pick" aria-haspopup="listbox" style="height: 30px; font-size: 13px">Footage/Drone ▾</button><span class="m" style="margin: 0 0 0 4px">Files land in <b style="color: #c9c9ce">Footage/Drone/100MEDIA/…</b></span></div>
+    </section>
+    <section>
+      <div class="step"><span class="num">3</span>Options</div>
+      <label class="cko"><input type="checkbox" checked>Include subfolders</label>
+      <label class="cko"><input type="checkbox">Path relative to the project<span class="m">for project templates</span></label>
+      <div class="ex">Excluded subfolders: none<button class="qbtn">Exclude subfolders…</button></div>
+    </section>
+  </div>
+  <div class="foot">
+    <span class="hint">Folder changed — the preview shows what is reused and relinked before anything changes</span>
+    <button class="btn sec">Cancel</button>
+    <button class="btn cta">Preview changes</button>
+  </div>
+</div>
+</body>
+</html>
