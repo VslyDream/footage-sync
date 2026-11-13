@@ -1,5 +1,6 @@
 "use strict";
 const {panelLayout}=require("./core/panel-layout");
+const {summary}=require("./core/changes-view");
 
 class MainPanel {
   constructor(root) {
@@ -36,6 +37,7 @@ class MainPanel {
     this.root.className="main-panel "+(layout.vertical?"vertical":"horizontal");
     this.actions.style.flexDirection=layout.vertical?"column":"row";
     this.actions.style.padding=layout.padding+"px";
+    this.actions.style.minWidth=(layout.vertical?layout.button+2*layout.padding:3*layout.button+2*layout.gap+2*layout.padding)+"px";
     for(let i=0;i<this.buttons.length;i++) {
       const b=this.buttons[i];
       b.style.width=layout.button+"px"; b.style.height=layout.button+"px";
@@ -58,7 +60,8 @@ class MainPanel {
     this.badge.style.padding="1px "+Math.min(4,this.layout.button*.06)+"px";
   }
   update(controller) {
-    const n=controller.batch?.changes?.length||0;
+    const state=summary(controller.batch||{}),n=state.count;
+    if(controller.error)state.needs++;
     const unavailable=Boolean(controller.batch?.changes?.some(c=>c.kind==="unavailable"));
     const warnings=controller.batch?.warnings?.length||0;
     const attention=Boolean(controller.error||controller.batch?.hasBlocking||warnings||unavailable);
@@ -70,9 +73,10 @@ class MainPanel {
     this.sync.setAttribute("title",this.busy?"Sync in progress — click for details":unavailable?"Sync unavailable — open Status to reconnect the source":"Sync — scan and sync this project");
     this.sync.setAttribute("aria-label",this.busy?"View sync progress":"Sync");
     this.status.className="main-action"+(attention?" needs-attention":"");
-    this.status.setAttribute("title",`Status — ${n} pending changes${attention?" · Needs attention":""}${warnings?` · ${warnings} warnings`:""}`);
+    this.status.setAttribute("title",`${n} changes waiting · ${state.needs} need you${warnings?` · ${warnings} TXT skipped`:""}${state.needs?" · Sync opens the Changes tab first":""}`);
     this.badge.textContent=String(n); this.badge.style.display=n?"block":"none";
-    this.attention.style.display=attention?"block":"none";
+    this.attention.textContent=state.needs?String(state.needs):"!";this.attention.style.display=attention?"block":"none";
+    const dot=this.root.querySelector("#sync-attention");if(dot)dot.style.display=state.needs&&!this.busy?"block":"none";
     this.syncIcon.style.display=this.busy?"none":"block";
     this.spinner.style.display=this.busy?"block":"none";
     this.fitCount(); this.animate(this.busy);

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ui-fixture",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/preview-ui.js"],
+      "port": 4318,
+      "url": "http://127.0.0.1:4318"
+    }
+  ]
+}

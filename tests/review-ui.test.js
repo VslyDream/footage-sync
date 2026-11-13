@@ -1,41 +1,7 @@
 "use strict";
-const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm"),path=require("node:path");
-function setup(actions,extra=[]){
-  const applied=[],batch={changes:[{id:"0",kind:"fragmented",path:"D:/a.mp4",blocking:true,message:"Decision needed"},{id:"1",kind:"new-file",path:"D:/b.wav",blocking:false}],media:[]};
-  const c={onChange(){},async apply(...args){applied.push(args);}},filename=path.resolve("plugin/ui.js"),mod={exports:{}};
-  batch.changes.push(...extra);
-  vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="uxp"||id==="./host/premiere"?{}:require(id.startsWith(".")?path.resolve("plugin",id):id),mod,mod.exports);
-  const ui=new mod.exports.UI(c),elements=new Map();
-  for(const id of ["close-x","later","apply","original-0","skip-0","change-0","change-1","change-2","dependency-2","decision-text-0"]){
-    const handlers={};elements.set(id,{disabled:id==="change-0",checked:["change-1","change-2"].includes(id),getAttribute:()=>"button",addEventListener:(event,fn)=>handlers[event]=fn,async click(){await handlers.click?.();}});
-  }
-  ui.modal=async(title,html,bind)=>{
-    let result;const d={querySelector:selector=>elements.get(selector.slice(1)),close:value=>result=value};
-    bind(d);for(const id of actions){await elements.get(id).click();if(id!=="apply")assert.equal(applied.length,0,"A decision alone must not mutate the project");}return result;
-  };
-  return {ui,batch,applied,elements};
-}
-test("Review Later applies no changes even after an Import original decision",async()=>{
-  const x=setup(["original-0","later"]);await x.ui.review(x.batch);assert.equal(x.applied.length,0);
-});
-
-test("Review resolves the media dependency before enabling the footage and title append",async()=>{
-  const extra=[{id:"2",kind:"append-footage",path:"D:/a.mp4"}];
-  const deferred=setup(["skip-0","apply"],extra);await deferred.ui.review(deferred.batch);
-  assert.equal(deferred.elements.get("change-2").disabled,true);assert.equal(deferred.elements.get("change-2").checked,false);
-  assert.match(deferred.elements.get("decision-text-0").textContent,/Deferred for this sync/);assert.deepEqual(deferred.applied[0][1],["1"]);
-  const original=setup(["original-0","apply"],extra);await original.ui.review(original.batch);
-  assert.equal(original.elements.get("change-2").disabled,false);assert.deepEqual(original.applied[0][1],["0","1","2"]);
-});
-
-test("an already completed sequence checkpoint does not require another media import",async()=>{
-  const x=setup(["apply"],[{id:"2",kind:"append-footage",path:"D:/a.mp4",checkpoint:true}]);await x.ui.review(x.batch);assert.deepEqual(x.applied[0][1],["1","2"]);
-});
-test("Review Import original applies only after the single Sync selected confirmation",async()=>{
-  const x=setup(["original-0","apply"]);await x.ui.review(x.batch);
-  assert.equal(x.applied.length,1);assert.deepEqual(x.applied[0],[x.batch,["0","1"],{"0":"original"}]);
-});
-test("deferring an MP4 clears an earlier original decision and leaves the safe selection",async()=>{
-  const x=setup(["original-0","skip-0","apply"]);await x.ui.review(x.batch);
-  assert.deepEqual(x.applied[0],[x.batch,["1"],{}]);assert.equal(x.elements.get("change-0").checked,false);assert.equal(x.elements.get("change-0").disabled,true);
-});
+const test=require('node:test'),assert=require('node:assert/strict'),{setup}=require('./helpers/ui');
+function batch(x){x.c.batch.changes=[{id:'0',kind:'fragmented',path:'D:/a.mp4',blocking:true},{id:'1',kind:'new-file',path:'D:/b.wav'},{id:'2',kind:'append-footage',path:'D:/a.mp4',entry:{key:'a'}}];x.c.batch.hasBlocking=true;return x.c.batch;}
+test('Changes closes without applying, even after choosing Import original',async()=>{const x=setup(),b=batch(x);x.ui.interact=async(title,d)=>{await d.querySelector('#decision-0-original').click();await d.querySelector('#close').click();};await x.ui.review(b);assert.equal(x.log.some(v=>v.apply),false);});
+test('Apply includes resolved media and its dependent append after one confirmation',async()=>{const x=setup(),b=batch(x);let opened=0;x.ui.interact=async(title,d)=>{if(++opened===1){await d.querySelector('#decision-0-original').click();await d.querySelector('#apply').click();}else await d.querySelector('#close').click();};await x.ui.review(b);const call=x.log.find(v=>v.apply).apply;assert.deepEqual(call[1],['0','1','2']);assert.deepEqual(call[2],{'0':'original'});assert.equal(x.c.dialogOpen,false);});
+test('Skip this time removes the MP4 dependency while safe changes remain selected',async()=>{const x=setup(),b=batch(x);let n=0;x.ui.interact=async(title,d)=>{if(++n===1){await d.querySelector('#decision-0-original').click();await d.querySelector('#decision-0-defer').click();assert.match(d.querySelector('#management-content').innerHTML,/Skipped this time/);await d.querySelector('#apply').click();}else await d.querySelector('#close').click();};await x.ui.review(b);assert.deepEqual(x.log.find(v=>v.apply).apply[1],['1']);});
+test('Ignore round trip preserves other decisions, unchecked files and expanded groups',async()=>{const x=setup(),b=batch(x);let windows=0;x.ui.interact=async(title,d)=>{if(title==='Ignore file or folder'){await d.querySelector('#ignore-confirm').click();return;}if(++windows===1){await d.querySelector('#decision-0-original').click();await d.querySelector('#expand-group-0').click();const file=d.querySelector('#change-1');file.checked=false;await file.change();await d.querySelector('#file-more-0').click();await d.querySelector('#menu-item-0').click();}else {assert.equal(x.ui.view.changes.decision(b.changes[0]),'original');assert.equal(x.ui.view.changes.selected(b.changes[1],b),false);assert.equal(x.ui.view.changes.expanded.has('New files'),true);await d.querySelector('#close').click();}};await x.ui.review(b);assert.equal(windows,2);assert.equal(x.log.some(v=>v.apply),false);});

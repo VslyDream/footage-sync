@@ -2,12 +2,12 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm"),path=require("node:path");
 const {panelLayout}=require("../plugin/core/panel-layout");
 
-test("all three buttons and icons fit narrow, short and wide panel content without scrolling",()=>{
+test("controls retain a 28px minimum and scroll below their available space",()=>{
   for(const [width,height] of [[50,250],[40,90],[50,70],[40,48],[159,90],[160,48],[340,150],[1920,48],[24,24]]) {
     const l=panelLayout(width,height),cross=l.vertical?width:height,long=l.vertical?height:width;
     assert.ok(l.button>0&&l.icon>0);
-    assert.ok(l.button+2*l.padding<=cross+1e-8);
-    assert.ok(3*l.button+2*l.gap+2*l.padding<=long+1e-8);
+    assert.ok(l.button>=28); if(l.button>28)assert.ok(l.button+2*l.padding<=cross+1e-8);
+    if(l.button>28)assert.ok(3*l.button+2*l.gap+2*l.padding<=long+1e-8);
     assert.ok(l.icon<l.button);
   }
   assert.equal(panelLayout(50,250).vertical,true);

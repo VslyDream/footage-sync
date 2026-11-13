@@ -3,7 +3,7 @@ body { margin:0; padding:0; background:#191919; color:#e8e8e8; font-size:13px; f
 .small-button:hover { background:#3b3b40; }
 .small-button.disabled { opacity:.5; cursor:default; }
 .brand { display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; background:#203b49; border:1px solid #3983a4; border-radius:4px; color:#8ed8f8; font-size:10px; margin-right:10px; }
-#main-panel { width:100%; height:100%; position:absolute; top:0; left:0; overflow:hidden; }
+#main-panel { width:100%; height:100%; position:absolute; top:0; left:0; overflow:auto; }
 #main-panel .main-actions { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:3px; }
 #main-panel.horizontal .main-actions { flex-direction:row; }
 #main-panel .main-action { flex-shrink:0; display:flex; position:relative; align-items:center; justify-content:center; width:44px; height:44px; padding:0; margin-bottom:2px; border:1px solid transparent; border-radius:4px; background:transparent; cursor:pointer; box-sizing:border-box; }
@@ -14,8 +14,8 @@ body { margin:0; padding:0; background:#191919; color:#e8e8e8; font-size:13px; f
 #main-panel .main-action.needs-attention { border-color:#967137; }
 #main-panel .action-icon { flex-shrink:0; pointer-events:none; }
 #main-panel .badge { position:absolute; top:0; right:0; padding:1px 3px; border-radius:7px; background:#30475f; color:#c2dfff; font-size:10px; line-height:1.2; font-weight:bold; pointer-events:none; }
-#main-panel .needs-attention .badge { background:#695027; color:#ffd68f; }
-#main-panel .attention { position:absolute; bottom:1px; right:2px; color:#ffd68f; font-weight:bold; font-size:10px; pointer-events:none; }
+#main-panel .attention { position:absolute; bottom:0; right:0; padding:0 2px; border-radius:7px; background:#695027; color:#ffd68f; font-weight:bold; font-size:10px; pointer-events:none; }
+#main-panel .sync-attention { position:absolute; top:2px; right:2px; width:7px; height:7px; border-radius:4px; background:#e0a145; pointer-events:none; }
 dialog { padding:0; margin:0; color:#e8e8e8; background:#222225; width:850px; height:580px; border:1px solid #47474b; border-radius:6px; }
 .window { display:flex; flex-direction:column; width:100%; height:100%; }
 .window-header { display:flex; align-items:center; min-height:48px; background:#29292d; border-bottom:1px solid #3a3a3e; padding:0 16px; }

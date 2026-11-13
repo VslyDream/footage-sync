@@ -3,6 +3,7 @@ const H=require("./host/premiere"), Store=require("./host/store"), P=require("./
 const {Progress}=require("./core/progress");
 const Dates=require("./core/footage-dates");
 const Ignore=require("./core/ignore");
+const {countChanges}=require("./core/changes-view");
 const sequenceChange=c=>["append-footage","sequence-review","sequence-error"].includes(c.kind);
 class Controller {
   constructor() { this.data=Store.defaults(); this.scanner=new Scanner(); this.project=null; this.path=""; this.busy=false; this.batch=null; this.error=null; this.listeners=[]; this.ticks=0; this.visible=false; this.dialogOpen=false; this.markerFailures=new Map(); }
@@ -64,7 +65,7 @@ class Controller {
   async setIgnored(value,remove=false){
     if(this.busy)throw new Error("Wait for the current sync to finish.");
     if(!await this.context())throw new Error("Choose an import project first.");
-    const rule=Ignore.rule(value),previous=this.data.ignored||[],same=r=>r.kind===rule.kind&&P.key(r.path)===P.key(rule.path);
+    const rule={...Ignore.rule(value),...(value.linkId?{linkId:value.linkId,origin:"excluded"}:{})},previous=this.data.ignored||[],same=r=>r.kind===rule.kind&&P.key(r.path)===P.key(rule.path);
     this.data.ignored=remove?previous.filter(r=>!same(r)):previous.some(same)?previous:[...previous,rule];
     try{await this.persist();}catch(e){this.data.ignored=previous;throw e;}
     if(!remove)for(const op of new Set([this.operation,this.lastOperation]))if(op){
@@ -73,6 +74,16 @@ class Controller {
       if(op.status==="warnings"&&!op.warnings.length)op.status="completed";
       if(op.status==="failed"&&!op.errors.length){op.status=op.warnings.length?"warnings":"completed";this.error=null;}
     }
+    this.batch=null;this.emit();
+  }
+  async setExcluded(link,paths){
+    if(this.busy)throw new Error("Wait for the current sync to finish.");
+    if(!await this.context())throw new Error("Choose an import project first.");
+    const root=P.resolve(P.dirname(this.path),link.folderPath),previous=this.data.ignored||[];
+    const rules=paths.map(path=>({...Ignore.rule({kind:"folder",path}),linkId:link.id,origin:"excluded"}));
+    if(rules.some(r=>P.key(r.path)===P.key(root)||!P.within(r.path,root)))throw new Error("Only subfolders of this link can be excluded.");
+    this.data.ignored=[...previous.filter(r=>!(r.kind==="folder"&&P.key(r.path)!==P.key(root)&&P.within(r.path,root))),...rules];
+    try{await this.persist();}catch(e){this.data.ignored=previous;throw e;}
     this.batch=null;this.emit();
   }
   async sequencePlan(plan,scans,path){
@@ -126,6 +137,9 @@ class Controller {
       this.progress("Scanning folders",{current:link.folderPath});
       const root=P.resolve(P.dirname(path),link.folderPath);
       scans[link.id]=Ignore.matches(root,this.data.ignored)?{root,files:[],dirs:[],txts:[],ignored:true}:Ignore.scan(await this.scanner.scan(link,path,detail=>this.progress("Scanning folders",detail),this.data.ignored),this.data.ignored);
+      // Remember a successful observation without writing the sidecar every poll.
+      // It is persisted with the next explicit settings/link/sync checkpoint.
+      if(!scans[link.id].error&&!scans[link.id].ignored)link.lastAvailable=new Date().toISOString();
       if(scans[link.id].error)this.warn(scans[link.id].error,link.folderPath);
       for(const file of scans[link.id].files)if(file.issue)this.warn(file.issue,file.path);
     }
@@ -157,16 +171,19 @@ class Controller {
   async persist() { if(!this.path) throw new Error("No saved project is open."); await this.assertContext(this.path); await Store.save(this.path,this.data); }
   async apply(batch,selected,decisions={},options={}) {
     if(this.busy) throw new Error("A sync is already running.");
-    this.begin("Sync");let failure;
+    this.begin("Sync");let failure,run,historySaved=false,mutationStarted=false;const completedChanges=[];
     try {
       await this.assertContext(batch.projectPath,batch.projectId);
       // Reanalyze immediately before mutation. A review decision applies only to the reviewed plan.
       const fresh=await this.analyze(batch.links);
+      run={time:new Date().toISOString(),trigger:options.trigger||"Sync",project:this.project.name,sequence:this.data.settings.sequenceTarget?.sequenceName,reused:(fresh.reused||[]).filter(r=>r.kind==="file").length};
       const filesOnly=options.filesOnly===true;
       const signature=b=>JSON.stringify([filesOnly?null:b.timeline,b.changes.filter(c=>!filesOnly||!sequenceChange(c)).map(c=>[c.kind,c.path,c.from,c.target,c.itemId,c.file?.size,c.file?.mtime,c.file?.identity,c.source?.path,c.source?.signature,c.source?.revision,c.source?.size,c.source?.mtime,c.source?.identity,c.expected,c.pendingMode,c.entry?.key,c.entry?.attempt,c.entry?.failure,c.checkpoint])]);
       if(signature(fresh)!==signature(batch)) throw new Error("Sources or project changed after analysis. Review the updated batch.");
       const chosen=(selected ? fresh.changes.filter(c=>selected.includes(c.id)) : fresh.changes).filter(c=>!filesOnly||!sequenceChange(c));
       for(const c of chosen) {
+        const target=c.kind==="new-folder"?P.dirname(c.path):c.target;
+        if(target&&fresh.changes.some(parent=>parent.kind==="new-folder"&&parent!==c&&P.within(target,parent.path)&&!chosen.some(v=>v.id===parent.id)))throw new Error("Select the required parent bin before applying this change: "+c.path);
         if(["append-footage","sequence-review"].includes(c.kind)&&decisions[c.id]!=="keep"&&!c.checkpoint){
           const source=fresh.changes.find(m=>["new-file","fragmented"].includes(m.kind)&&P.key(m.path)===P.key(c.path));
           if(source&&!chosen.some(m=>m.id===source.id))throw new Error("Select and resolve the source import before appending its footage and title: "+c.path);
@@ -174,18 +191,21 @@ class Controller {
         if(c.blocking && !(c.kind==="fragmented" && decisions[c.id]==="original") && !(c.kind==="marker-choice"&&["append","replace","skip"].includes(decisions[c.id]))&&!(c.kind==="sequence-review"&&["retry","keep"].includes(decisions[c.id]))) throw new Error("Resolve blocking items before syncing.");
         if(c.file) { const scan=fresh.scans[c.linkId]; if(!scan.files.some(f=>P.key(f.path)===P.key(c.path)&&f.size===c.file.size&&f.mtime===c.file.mtime)) throw new Error("Source changed after analysis."); }
       }
+      const skipKeys=new Set(options.skipSequenceKeys||[]);
+      for(const key of skipKeys)if(!fresh.changes.some(c=>sequenceChange(c)&&c.entry?.key===key&&!chosen.some(v=>v.id===c.id)))throw new Error("The sequence selection changed. Review the updated batch.");
       // Store links before mutation: if a later import fails, reconciliation can safely recover.
       const previousLinks=this.data.links;
+      mutationStarted=true;
       this.data.links=batch.links;
       try { await this.persist(); } catch(e) { this.data.links=previousLinks; throw e; }
       let applied=0;const markerWarnings=[],sequenceWarnings=[];
       // Persist append intent before importing media; a failed/restarted run can
       // still append an item which now exists in the Footage project.
-      const intents=filesOnly?[]:fresh.changes.filter(c=>sequenceChange(c)&&typeof c.entry?.date==="string"&&chosen.some(v=>v.id===c.id||["new-file","fragmented"].includes(v.kind)&&P.key(v.path)===P.key(c.path)));
+      const intents=filesOnly?[]:fresh.changes.filter(c=>sequenceChange(c)&&!skipKeys.has(c.entry?.key)&&typeof c.entry?.date==="string"&&chosen.some(v=>v.id===c.id||["new-file","fragmented"].includes(v.kind)&&P.key(v.path)===P.key(c.path)));
       const queue=new Map((this.data.sequenceQueue||[]).map(e=>[e.key,e]));
-      if(filesOnly){
+      if(filesOnly||skipKeys.size){
         const skipped=new Set(this.data.sequenceSkipped||[]);
-        for(const c of fresh.changes.filter(c=>sequenceChange(c)&&c.entry&&(!fresh.changes.some(m=>["new-file","fragmented"].includes(m.kind)&&P.key(m.path)===P.key(c.path))||chosen.some(m=>["new-file","fragmented"].includes(m.kind)&&P.key(m.path)===P.key(c.path))))){skipped.add(c.entry.key);queue.delete(c.entry.key);}
+        for(const c of fresh.changes.filter(c=>sequenceChange(c)&&c.entry&&(filesOnly||skipKeys.has(c.entry.key))&&(!fresh.changes.some(m=>["new-file","fragmented"].includes(m.kind)&&P.key(m.path)===P.key(c.path))||chosen.some(m=>["new-file","fragmented"].includes(m.kind)&&P.key(m.path)===P.key(c.path))))){skipped.add(c.entry.key);queue.delete(c.entry.key);}
         this.data.sequenceSkipped=[...skipped];
       }
       for(const c of intents)queue.set(c.entry.key,c.entry);
@@ -212,6 +232,7 @@ class Controller {
           queue.delete(entry.key);this.data.sequenceQueue=[...queue.values()];
           this.data.sequenceObserved=[...(this.data.sequenceObserved||[]).filter(e=>e.key!==entry.key),{key:entry.key,path:entry.path,date:entry.date,target:entry.target}];
           await this.persist();applied++;
+          if(!change.checkpoint&&decisions[change.id]!=="keep"){const source=completedChanges.find(c=>P.key(c.path)===P.key(change.path)&&["new-file","fragmented"].includes(c.kind));if(source)source.timeline=true;else completedChanges.push({kind:"sequence-review",path:change.path,timeline:true});}
           }catch(e){
             await this.assertContext(batch.projectPath,batch.projectId);
             entry.failure=e.message;queue.set(entry.key,entry);this.data.sequenceQueue=[...queue.values()];await this.persist();
@@ -235,7 +256,7 @@ class Controller {
             const result=await Markers.apply(this.project,item,{...source,revision:change.source.revision},decisions[change.id]||"append",change.expected);
             this.data.markerObserved??={};this.data.markerObserved[itemId]=result.ledger;
             if(this.data.markerSources?.[P.key(change.path)]) {this.data.markerSources[itemId]=this.data.markerSources[P.key(change.path)];delete this.data.markerSources[P.key(change.path)];}
-            applied+=result.added;await this.persist();
+            applied+=result.added;await this.persist();if(result.added)completedChanges.push({kind:"clip-markers",path:change.path,txtPath:change.source.path,markers:result.added});
           }catch(e){
             await this.assertContext(batch.projectPath,batch.projectId);
             this.markerFailures.set(P.key(change.path),{signature:JSON.stringify([change.source.signature,change.source.revision]),message:e.message});
@@ -249,6 +270,7 @@ class Controller {
         const before=["new-file","fragmented"].includes(change.kind)?null:await H.inventory(this.project);
         this.progress(change.kind==="new-folder"?"Creating bins":"Updating Premiere",detail);
         const verified=await H.applyChange(this.project,change,before,(phase,current)=>this.progress(phase,{...detail,current})); applied++;
+        completedChanges.push({kind:change.kind,path:change.path,from:change.from});
         // Checkpoint verified mappings after each action so a later failure remains recoverable.
         this.progress("Saving verified progress",detail);
         this.checkpoint(fresh,verified||await H.inventory(this.project)); await this.persist();
@@ -257,10 +279,10 @@ class Controller {
       this.progress("Final project verification",{completed:chosen.length,total:chosen.length});
       const after=await H.inventory(this.project);
       this.checkpoint(fresh,after);
-      this.data.history.unshift({time:new Date().toISOString(),count:applied,message:markerWarnings.length||sequenceWarnings.length||fresh.warnings?.length||fresh.sequenceWarnings?.length ? "Sync completed with warnings" : applied ? "Sync completed" : fresh.changes.length ? "No changes applied" : "Everything is up to date"});
+      this.data.history.unshift({...run,count:countChanges(completedChanges),changes:completedChanges,duration:Date.now()-this.operation.startedAt,status:"completed",message:applied?"Sync completed":fresh.changes.length?"No changes applied":"Everything is up to date"});historySaved=true;
       this.data.history=this.data.history.slice(0,30); await this.persist(); this.error=null; this.batch=await this.analyze();
       this.progress("Sync finished",{completed:chosen.length,total:chosen.length});
-    } catch(e) { failure=e.message;this.error=e.message; throw e; }
+    } catch(e) { failure=e.message;this.error=e.message;if(!historySaved&&this.path){this.data.history.unshift({...run,time:run?.time||new Date().toISOString(),count:countChanges(completedChanges),changes:completedChanges,duration:Date.now()-this.operation.startedAt,status:"failed",error:e.message,errorPath:this.operation.current,stage:this.operation.phase,message:"Sync failed"});this.data.history=this.data.history.slice(0,30);if(mutationStarted)try{await this.persist();}catch(_){/* Preserve the original failure. */}}throw e; }
     finally { await this.finish(failure); }
   }
   async chooseMarkers(entry,path) {
@@ -299,7 +321,7 @@ class Controller {
     this.timer=setInterval(async()=>{
       this.ticks++;
       if(this.busy||this.dialogOpen) return;
-      try { await this.scan(undefined,true); if(this.data.settings.mode==="AUTO" && this.batch?.changes.length && !this.batch.hasBlocking) await this.apply(this.batch); }
+      try { await this.scan(undefined,true); if(this.data.settings.mode==="AUTO" && this.batch?.changes.length && !this.batch.hasBlocking) await this.apply(this.batch,undefined,{}, {trigger:"Automatic sync"}); }
       catch(e) { this.error=e.message; this.emit(); }
     },5000);
   }

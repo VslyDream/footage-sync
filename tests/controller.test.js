@@ -225,3 +225,19 @@ test("ignore persistence failure rolls back the rule and preserves the current b
   const x=setup(),batch=await x.c.scan();x.store.save=async()=>{throw Error("Read only sidecar");};
   await assert.rejects(()=>x.c.setIgnored({kind:"file",path:"D:/Media/a.wav"}),/Read only/);assert.deepEqual(x.c.data.ignored,[]);assert.equal(x.c.batch,batch);
 });
+test('per-file timeline opt-out does not replay later or skip another video',async()=>{
+ const x=await withSequence();x.setFiles([dated('one'),dated('two')]);const b=await x.c.scan(),append=b.changes.find(c=>c.kind==='append-footage'&&c.path===dated('one').path);
+ await x.c.apply(b,b.changes.filter(c=>c.id!==append.id).map(c=>c.id),{}, {skipSequenceKeys:[append.entry.key]});
+ assert.equal(x.inv.clips.length,2);assert.deepEqual(x.log.filter(c=>c.kind==='append').map(c=>c.path),[dated('two').path]);assert.equal(x.c.data.sequenceQueue.length,0);assert.equal((await x.c.scan()).changes.length,0);
+ assert.equal(x.c.data.history[0].count,2);assert.equal(x.c.data.history[0].changes.filter(c=>c.timeline).length,1);
+});
+test('exclusion saves replace only this subtree folder rules and roll back on persistence failure',async()=>{
+ const x=setup();await x.c.context();const link=x.c.data.links[0];x.c.data.ignored=[{kind:'folder',path:'D:/Media/Old'},{kind:'file',path:'D:/Media/keep.mp4'},{kind:'folder',path:'D:/Other'}];
+ await x.c.setExcluded(link,['D:/Media/Proxy']);assert.equal(x.c.data.ignored.length,3);assert.equal(x.c.data.ignored.find(r=>r.origin==='excluded').linkId,link.id);assert.equal(x.c.data.ignored.some(r=>r.path==='D:/Media/Old'),false);
+ const previous=x.c.data.ignored;x.store.save=async()=>{throw Error('Disk full');};await assert.rejects(()=>x.c.setExcluded(link,[]),/Disk full/);assert.equal(x.c.data.ignored,previous);
+ await assert.rejects(()=>x.c.setExcluded(link,['D:/Other']),/Only subfolders/);
+});
+test('failed history records only successful changes before the failed mutation',async()=>{
+ const x=setup();x.setFiles([{path:'D:/Media/a.wav',rel:'a.wav',size:10,mtime:1,identity:'a'},{path:'D:/Media/b.wav',rel:'b.wav',size:10,mtime:1,identity:'b'}]);const apply=x.host.applyChange;x.host.applyChange=async(p,c)=>{if(c.path.endsWith('b.wav'))throw Error('Host refused second file');return apply(p,c);};const batch=await x.c.scan();await assert.rejects(()=>x.c.apply(batch),/Host refused/);const h=x.c.data.history[0];assert.equal(h.status,'failed');assert.equal(h.count,1);assert.deepEqual(h.changes.map(c=>c.path),['D:/Media/a.wav']);assert.match(h.stage,/Updating Premiere/);
+});
+test('an invalid timeline opt-out is rejected before any sidecar or project mutation',async()=>{const x=await withSequence();x.setFiles([dated()]);const batch=await x.c.scan();await assert.rejects(()=>x.c.apply(batch,batch.changes.map(c=>c.id),{}, {skipSequenceKeys:['not-reviewed']}),/sequence selection changed/);assert.equal(x.log.length,0);});

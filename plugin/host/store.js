@@ -7,7 +7,7 @@ async function load(projectPath) {
   const value=JSON.parse(await fs.readFile(path,{encoding:"utf-8"}));
   if(value.version!==1 || !Array.isArray(value.links) || !value.settings || !value.records) throw new Error("Footage Sync settings are invalid. The existing file was preserved.");
   if(value.ignored!==undefined&&(!Array.isArray(value.ignored)||value.ignored.some(r=>{try{require("../core/ignore").rule(r);return false;}catch(_){return true;}})))throw new Error("Footage Sync ignore list is invalid. The existing file was preserved.");
-  return {...defaults(),...value,settings:{...defaults().settings,...value.settings}};
+  return {...defaults(),...value,settings:{...defaults().settings,...value.settings,mode:value.settings.mode==="MANUAL"?"ASK":value.settings.mode??"ASK",warnings:true}};
 }
 async function save(projectPath,value) {
   const path=P.clean(projectPath)+".footage-sync.json", temp=path+".tmp";
