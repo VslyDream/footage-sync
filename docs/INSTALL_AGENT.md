@@ -98,7 +98,7 @@ if ($previous.Count) { "Прежняя версия перемещена в $bac
 
 Нужна, когда требуется версия новее последнего релиза. Склонируйте репозиторий и выполните блок 1. Затем вместо блоков 2 и 3 скопируйте папку `plugin` в `External` под именем `com.vsly.footage-sync_<версия>`, где версия взята из `plugin/manifest.json`. Прежнюю папку плагина сначала переместите в резервную, как в блоке 3.
 
-Разработчик может использовать готовый скрипт. Ему нужен PowerShell 7 и путь к Premiere:
+Разработчик может использовать готовый скрипт: он сам переносит папки прежних версий в `%LOCALAPPDATA%\FootageSync\backup-<дата-время>`. Ему нужен PowerShell 7 и путь к Premiere:
 
 ```powershell
 pwsh ./scripts/install-dev.ps1 -PremierePath "<путь к Adobe Premiere Pro.exe>"
@@ -108,7 +108,7 @@ pwsh ./scripts/install-dev.ps1 -PremierePath "<путь к Adobe Premiere Pro.ex
 
 Сборки для macOS не проверены на настоящем Mac. Предупредите об этом пользователя до установки.
 
-Возьмите из релиза `Footage-Sync-<версия>-Mac-Manual.zip`, распакуйте и скопируйте папку `com.vsly.footage-sync_<версия>` в `~/Library/Application Support/Adobe/UXP/Plugins/External`. Правила те же: Premiere закрыт, прежняя версия перемещена в резервную папку, соседние плагины не тронуты. Подробности — в [инструкции для Mac](INSTALL_MAC_MANUAL_V0_1_RU.md).
+Возьмите из релиза `Footage-Sync-<версия>-Mac-Manual.zip`, распакуйте и скопируйте папку `com.vsly.footage-sync_<версия>` в `~/Library/Application Support/Adobe/UXP/Plugins/External`. Правила те же: Premiere закрыт, прежняя версия перемещена в резервную папку, соседние плагины не тронуты. Подробности — в [инструкции для Mac](INSTALL_MAC_MANUAL_RU.md).
 
 ## Если плагина нет в меню Premiere
 
@@ -117,3 +117,4 @@ pwsh ./scripts/install-dev.ps1 -PremierePath "<путь к Adobe Premiere Pro.ex
 3. Проверьте, что в `External` одна папка этого плагина.
 4. Спросите пользователя, не ставил ли он плагин ещё и файлом `.ccx` через Creative Cloud. Две копии с одним идентификатором мешают друг другу. Копию из Creative Cloud пользователь удаляет сам в её окне управления плагинами.
 5. Premiere читает папку плагинов при запуске: после установки его нужно запустить заново.
+6. Попросите пользователя проверить настройку **Developer Mode** в разделе Plugins настроек Premiere: Adobe указывает её для плагинов, поставленных не через Creative Cloud. Сами настройки Premiere не меняйте.

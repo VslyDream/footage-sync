@@ -121,7 +121,7 @@ Native Review imported a genuine fragmented fixture with footage and text. Mixed
 
 [VALIDATED — local development installation]
 
-Only the dedicated `com.vsly.footage-sync_0.1.0` folder in user UXP External is updated by `scripts/install-dev.ps1`. The installation refuses updates while Premiere runs. No Adobe binaries, preferences, other plugin sources or existing media assets are installer targets. Original test projects are backed up in `artifacts/original-projects/`; SHA256 of the three pre-existing Polden OBS Bridge files is recorded in `docs/existing-plugins-before.json` for comparison after testing.
+Only the dedicated `com.vsly.footage-sync_<version>` folder in user UXP External is written by `scripts/install-dev.ps1`; folders of other versions of the same plugin are moved to a backup folder. The installation refuses updates while Premiere runs. No Adobe binaries, preferences, other plugin sources or existing media assets are installer targets. Original test projects are backed up in `artifacts/original-projects/`; SHA256 of the three pre-existing Polden OBS Bridge files is recorded in `docs/existing-plugins-before.json` for comparison after testing.
 
 After host testing, all three pre-existing Bridge SHA256 hashes matched the original snapshot (`artifacts/existing-plugins-after.json`). The link was restored to its working fixture folder and mode returned to ASK.
 

@@ -19,20 +19,25 @@ $releaseVersion = $releaseManifest.version
 $releaseFolder = "$($releaseManifest.id)_$releaseVersion"
 $releaseCCX = Join-Path $releaseDist $(if ($MacOnly) { "Footage-Sync-$releaseVersion-Mac.ccx" } else { "Footage-Sync-$releaseVersion.ccx" })
 $releaseZIP = Join-Path $releaseDist $(if ($MacOnly) { "Footage-Sync-$releaseVersion-Mac.zip" } else { "Footage-Sync-$releaseVersion-Windows.zip" })
-$releaseInstructions = Join-Path $releaseRoot $(if ($MacOnly) { 'docs\INSTALL_MAC_V0_1_RU.md' } else { 'docs\INSTALL_V0_1_RU.md' })
+$releaseInstructions = Join-Path $releaseRoot $(if ($MacOnly) { 'docs\INSTALL_MAC_RU.md' } else { 'docs\INSTALL_RU.md' })
 $releaseInstructionName = [IO.Path]::GetFileName($releaseInstructions)
 if ($MacManual) {
     $releaseZIP = Join-Path $releaseDist "Footage-Sync-$releaseVersion-Mac-Manual.zip"
-    $releaseInstructions = Join-Path $releaseRoot 'docs\INSTALL_MAC_MANUAL_V0_1_RU.md'
+    $releaseInstructions = Join-Path $releaseRoot 'docs\INSTALL_MAC_MANUAL_RU.md'
     $releaseInstructionName = [IO.Path]::GetFileName($releaseInstructions)
 }
 
+# Works in Windows PowerShell 5.1 and PowerShell 7: no .NET 5+ only calls.
+function Get-StreamSHA256([IO.Stream]$stream) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') } finally { $sha.Dispose() }
+}
 function New-ReleaseArchive([string]$archivePath, [string]$entryPrefix, [bool]$includeInstructions, [object[]]$inputFiles = $releaseFiles, [string]$inputRoot = $releaseSource) {
     $stream = [IO.File]::Open($archivePath, [IO.FileMode]::Create, [IO.FileAccess]::Write)
     $archive = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Create)
     try {
         foreach ($releaseFile in $inputFiles) {
-            $relative = [IO.Path]::GetRelativePath($inputRoot, $releaseFile.FullName).Replace('\', '/')
+            $relative = $releaseFile.FullName.Substring($inputRoot.Length + 1).Replace('\', '/')
             $entry = $archive.CreateEntry($entryPrefix + $relative, [IO.Compression.CompressionLevel]::Optimal)
             $entry.LastWriteTime = [DateTimeOffset]::new(2026, 10, 6, 0, 0, 0, [TimeSpan]::Zero)
             $inputStream = [IO.File]::OpenRead($releaseFile.FullName)
@@ -55,16 +60,16 @@ function Test-ReleaseArchive([string]$archivePath, [string]$entryPrefix, [bool]$
         $expectedCount = $inputFiles.Count + [int]$includeInstructions
         if ($archive.Entries.Count -ne $expectedCount) { throw 'Unexpected release entries.' }
         foreach ($releaseFile in $inputFiles) {
-            $relative = [IO.Path]::GetRelativePath($inputRoot, $releaseFile.FullName).Replace('\', '/')
+            $relative = $releaseFile.FullName.Substring($inputRoot.Length + 1).Replace('\', '/')
             $entry = $archive.GetEntry($entryPrefix + $relative)
             if (-not $entry) { throw "Missing release file: $relative" }
             $entryStream = $entry.Open()
-            try { $actual = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($entryStream)) } finally { $entryStream.Dispose() }
+            try { $actual = Get-StreamSHA256 $entryStream } finally { $entryStream.Dispose() }
             if ($actual -ne (Get-FileHash -LiteralPath $releaseFile.FullName -Algorithm SHA256).Hash) { throw "Release content differs: $relative" }
         }
         if ($includeInstructions) {
             $entryStream = $archive.GetEntry($releaseInstructionName).Open()
-            try { $actual = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($entryStream)) } finally { $entryStream.Dispose() }
+            try { $actual = Get-StreamSHA256 $entryStream } finally { $entryStream.Dispose() }
             if ($actual -ne (Get-FileHash -LiteralPath $releaseInstructions).Hash) { throw 'Packaged instructions differ.' }
         }
     } finally { $archive.Dispose(); $stream.Dispose() }

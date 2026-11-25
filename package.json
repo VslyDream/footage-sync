@@ -1,13 +1,13 @@
 {
   "name": "footage-sync",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "engines": { "node": ">=24.0.0" },
   "scripts": {
     "test": "node --test --test-isolation=none tests/*.test.js",
     "check": "node scripts/check.js",
-    "package": "pwsh -NoProfile -File scripts/build-release.ps1",
-    "package:mac": "pwsh -NoProfile -File scripts/build-release.ps1 -MacOnly",
-    "package:mac:manual": "pwsh -NoProfile -File scripts/build-release.ps1 -MacManual"
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-release.ps1",
+    "package:mac": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-release.ps1 -MacOnly",
+    "package:mac:manual": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-release.ps1 -MacManual"
   }
 }

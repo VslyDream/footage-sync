@@ -29,10 +29,17 @@
 ### Marker numbers, README and agent install — 2026-11-25
 
 - **Marker TXT numbers 1–8.** [LOCKED — user decision 2026-11-25, SPEC §16] The parser accepts 1–8 and rejects 0 and 9. Inside the plugin the color stays the Premiere index 0–7. [VALIDATED — Polden OBS source] `frontend/utility/PoldenMarkers.cpp` writes `H:MM:SS,<index + 1>` with CRLF and no BOM, in the same color order.
-- **TXT processed before the switch.** [OPEN — proposed, not confirmed by the user] The stored signature keeps the number as written, so an already processed TXT does not return to Changes and its existing markers keep the colors they were given under the old numbering. Assigning the TXT again by hand offers Replace. The alternative is a one-time Review for every such clip.
-- **Checks.** 179 tests and the 29-file syntax check pass. [NOT DONE] The installed copy still has the previous `core/markers.js`: Premiere was running, so `scripts/install-dev.ps1` was not run. The new numbering has no native host run yet.
+- **TXT processed before the switch.** [LOCKED — user decision 2026-11-25, SPEC §16] An already processed TXT does not return to Changes and its existing markers keep the colors they were given under the old numbering. The stored signature keeps the number as written, which is what makes the receipt still match. Assigning the TXT again by hand offers Replace.
+- **Checks.** 179 tests and the 29-file syntax check pass. [NOT DONE] The 1–8 numbering has no native host run yet.
 - **README.** Rewritten for editors. Pictures with numbered callouts are rendered by `scripts/build-readme-images.ps1` from `docs/readme/src/`. They use the design references and one hand-built first-run state of the Links tab.
-- **Agent install.** `docs/INSTALL_AGENT.md` installs the latest release into `External` and moves an earlier copy to a backup folder. Its check, install and verify blocks ran unchanged against a scratch folder with the local v0.1.0 ZIP. The download line itself was not executed. `releases/latest` answers 404 while the only release is a pre-release, so the instruction reads the release list.
+- **Agent install.** `docs/INSTALL_AGENT.md` installs the latest release into `External` and moves an earlier copy to a backup folder. Its check, install and verify blocks ran unchanged against a scratch folder with the local v0.1.0 ZIP. The download line itself was not executed. `releases/latest` does not see pre-releases, so the instruction reads the release list.
+
+### Release 0.2.0 — 2026-11-25
+
+- **Version.** [LOCKED — user decision 2026-11-25] Everything since the v0.1 preview ships as 0.2.0. Manifest and `package.json` carry 0.2.0. Plugin id, Premiere baseline 25.6 and permissions are unchanged.
+- **Local install.** [VALIDATED — installation] `scripts/install-dev.ps1` ran with Premiere closed. It moved `com.vsly.footage-sync_0.1.0` to `%LOCALAPPDATA%\FootageSync\backup-20261125-185355` and wrote `com.vsly.footage-sync_0.2.0`. All 34 installed files match the source by SHA256, with no extras: `artifacts/release-0.2.0/installed.json`. The neighbouring plugin folders kept their timestamps. [NOT DONE] Premiere has not been started since, so loading from the renamed folder is unverified.
+- **Scripts.** This machine has no PowerShell 7. `install-dev.ps1`, `verify-dev-install.ps1` and `build-release.ps1` now run in Windows PowerShell 5.1 as well, and the npm package scripts call `powershell`. The install folder name comes from the manifest version. Folders of other versions of the same plugin are moved to a backup, not deleted.
+- **Packages.** `npm run package`, `package:mac` and `package:mac:manual` build the Windows ZIP, CCX, Mac ZIP, Mac CCX and Mac manual ZIP from the same 34 runtime files and compare every archive entry with the source. The instructions inside are `docs/INSTALL_RU.md`, `INSTALL_MAC_RU.md` and `INSTALL_MAC_MANUAL_RU.md`; they no longer carry a version in the name or text. [NOT DONE] CCX installation through Creative Cloud and every Mac package remain untested in a host.
 
 ### UI redesign baseline
 
@@ -51,7 +58,7 @@
 
 [LOCKED — user request/answer 2026-11-04] Автоматический Fill Frame реализуется собственным масштабированием при проверенном совпадении со штатной командой; это заменяет прежний ручной шаг. Потерянная native ссылка import project восстанавливается поиском того же сохранённого пути при штатном polling. Имя Type Tool клипа — имя папки без префикса.
 
-**v0.1 preview release / first working UXP core.**
+**Release 0.2.0 on top of the v0.1 preview core.**
 
 ### Retained native core — project recovery, plain title names and Fill Frame
 
@@ -137,7 +144,7 @@ FUT-001: UTF-8 parser, scanner TXT, discovery/policy service, project-contained 
 
 [VALIDATED — installation isolation]
 
-`scripts/install-dev.ps1` пишет только собственную папку `com.vsly.footage-sync_0.1.0` и требует закрытого Premiere. SHA256 трёх существовавших файлов Polden OBS Bridge совпали после тестов: `artifacts/existing-plugins-after.json`. Adobe binaries и другие plugin sources не изменены.
+`scripts/install-dev.ps1` пишет только собственную папку `com.vsly.footage-sync_<version>`, переносит папки других версий этого же плагина в резервную и требует закрытого Premiere. SHA256 трёх существовавших файлов Polden OBS Bridge совпали после тестов: `artifacts/existing-plugins-after.json`. Adobe binaries и другие plugin sources не изменены.
 
 Тестовый Production: `D:\3_Proga\Polden-OBS\build_polden_next\test-sandbox\PoldenBridgeTest\01_PoldenBridgeTest_Production`, project `00_Footage/01_PoldenBridgeTest_Footage.prproj`. Исходные `.prproj` до тестов сохранены в `artifacts/original-projects/`. Для rename/move/import использованы только созданные fixtures из `artifacts/test-media/`; existing `02_Assets/01_VIDEO` не изменялся.
 
@@ -184,7 +191,7 @@ Official evidence и local findings разделены в IMPLEMENTATION_NOTES. 
 
 Текущая source с project recovery, plain title names и automatic Fill Frame установлена; native comparison семи форматов и fresh footage/audio/Type Tool import завершены. [Current acceptance](docs/RECONNECT_FILL_ACCEPTANCE.md). Следующие проверки: second-editor locks, native sequence interruption/Undo, representative audio/timecode layouts, rotation/default Scale-to-Frame preference, другие frame/PAR targets, long-running AUTO и large/network profiling. Release assets этим запросом не публиковались.
 
-Приоритет v0.1: выполнить установку release CCX/ZIP в host; проверить новую scanner правку и permissions. Затем проверить shared-profile root/bin anchor и read-only Production, согласовать adoption/migration и helper policy по research docs. До этого релиз остаётся preview.
+Приоритет после 0.2.0: запустить Premiere с папкой `com.vsly.footage-sync_0.2.0` и проверить в host нумерацию маркеров 1–8; выполнить установку release CCX/ZIP в host; проверить permissions. Затем проверить shared-profile root/bin anchor и read-only Production, согласовать adoption/migration и helper policy по research docs. До этого релиз остаётся preview.
 
 Mac: проверить в первую очередь ручное копирование Mac-Manual folder в user External без Creative Cloud Desktop на копии проекта, затем folder picker/Initial Sync/import/repeat/rename/relink и closed-panel AUTO. CCX installation acceptance остаётся отдельным spike. Переупаковка и production locks остаются прежними gaps; публикация Mac preview их не закрывает.
 

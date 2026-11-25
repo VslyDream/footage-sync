@@ -41,6 +41,8 @@
 
 [LOCKED — user request 2026-10-13] В существующий v0.1.0 release добавляется Mac preview package с прежним baseline Premiere 25.6 и тем же plugin ID/version. [SPIKE] macOS installation, filesystem/permissions, host API и lifecycle acceptance ещё не выполнены; выпуск preview не является подтверждением полноценной macOS compatibility. Windows остаётся primary OS.
 
+[LOCKED — user decision 2026-11-25] Все изменения после v0.1 preview выпускаются отдельным релизом **0.2.0** с тем же plugin ID и baseline Premiere 25.6. Mac-пакеты собираются из тех же исходников и остаются непроверенными в host.
+
 [LOCKED — user request 2026-10-13] Для Mac нужен также preview ZIP с готовой папкой плагина для ручного копирования в пользовательский UXP External, как в Windows workflow. Этот путь установки не требует Creative Cloud Desktop. [SPIKE] Native Mac loading/permissions должны быть проверены; runtime, ID/version и функциональные правила не меняются из-за способа установки.
 
 ---
@@ -579,6 +581,8 @@ Conflicts и offline media попадают в Changes/details и не испр�
 Первая версия читает UTF-8 TXT: одна строка = `H:MM:SS,номер_цвета`, целые секунды от начала исходного видео. BOM, CRLF и пустые строки допускаются.
 
 [LOCKED — user decision 2026-11-25, supersedes Markerbox indexes 0–7] Номера цветов — **1–8**, тот же формат, что пишет Polden OBS: 1 green, 2 red, 3 purple (rose), 4 orange, 5 yellow, 6 white, 7 blue, 8 cyan (teal). Номер вне 1–8, включая `0`, — ошибка строки по общему правилу ниже. Имена, комментарии, диапазоны, дробные секунды и frame timecode не входят в эту версию.
+
+[LOCKED — user decision 2026-11-25] TXT, обработанные до перехода на 1–8, повторно в Changes не поднимаются; уже поставленные маркеры сохраняют цвета прежней нумерации.
 
 [LOCKED — user decisions, 2026-10-03]
 
