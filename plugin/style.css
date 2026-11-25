@@ -9,6 +9,8 @@ body { margin:0; padding:0; background:#191919; color:#e8e8e8; font-size:13px; f
 #main-panel .main-action { flex-shrink:0; display:flex; position:relative; align-items:center; justify-content:center; width:44px; height:44px; padding:0; margin-bottom:2px; border:1px solid transparent; border-radius:4px; background:transparent; cursor:pointer; box-sizing:border-box; }
 #main-panel .main-action.disabled { opacity:.45; cursor:default; }
 #main-panel .main-action.working { opacity:1; }
+#timeline-progress { position:absolute; left:3px; right:3px; bottom:1px; height:3px; border-radius:2px; overflow:hidden; background:#3e454e; pointer-events:none; }
+#timeline-progress-fill { height:100%; background:#83baff; }
 #main-panel .main-action:hover { background:#292929; }
 #main-panel .main-action:focus { border-color:#80baff; background:#242d38; }
 #main-panel .main-action.needs-attention { border-color:#967137; }

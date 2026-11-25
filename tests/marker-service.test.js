@@ -39,3 +39,23 @@ test("range validation skips the entire TXT with its original line number",async
 test("blocking media reconciliation cannot acquire clip markers prematurely",async()=>{
  const x=setup();x.input.plan.changes[0].blocking=true;assert.equal((await x.analyze()).changes.length,0);
 });
+test("only the acknowledged empty TXT version for the same clip is quiet across rescans",async()=>{
+  const x=setup();x.existing();
+  Object.assign(x.txt,{error:"Marker TXT is empty.",empty:true,stamp:"0:100:inode"});
+  const result=await x.analyze(),warning=result.warnings[0];
+  assert.ok(warning.emptyVersion);
+  x.input.data.emptyMarkerReceipts={clip:warning.emptyVersion};
+  assert.deepEqual((await x.analyze()).warnings,[]);
+  x.txt.stamp="0:200:inode";
+  assert.equal((await x.analyze()).warnings.length,1);
+  x.txt.stamp="0:100:inode";
+  x.input.data.markerSources.clip={path:x.txt.path,revision:1};
+  assert.equal((await x.analyze()).warnings.length,1);
+  delete x.input.data.markerSources.clip;
+  Object.assign(x.txt,{empty:false,error:"Line 1: Invalid color"});
+  assert.match((await x.analyze()).warnings[0].message,/Line 1/);
+  x.txt.error="";
+  assert.equal((await x.analyze()).changes[0].kind,"clip-markers");
+  x.setLedger({version:1,imports:[{sourceKey:"d:/media/apple.txt",signature:"old",revision:0}]});
+  assert.equal((await x.analyze()).changes[0].kind,"marker-choice");
+});

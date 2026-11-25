@@ -24,8 +24,13 @@ function folder(item) { try { return ppro.FolderItem.cast(item); } catch (_) { r
 function clip(item) { try { return ppro.ClipProjectItem.cast(item); } catch (_) { return null; } }
 async function inventory(project,onProgress) {
   const root = await project.getRootItem(), bins=[], clips=[], handles=new Map();
+  let nextYield=Date.now()+25;
   async function walk(parent,parentPath) {
     for(const item of await parent.getItems()) {
+      if(Date.now()>=nextYield){
+        await new Promise(resolve=>setTimeout(resolve,0));
+        nextYield=Date.now()+25;
+      }
       onProgress?.({current:P.join(parentPath,String(item.name)),completed:bins.length+clips.length});
       const id=String(await item.getId()), name=String(item.name); handles.set(id,item);
       const bin=folder(item);

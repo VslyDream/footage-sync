@@ -107,7 +107,7 @@ These images preserve the Watchtower references supplied during product discussi
 | UI-04 | Add link | Dialog | Links `+ Add link` | [add-link.png](ui/redesign-2026-11/add-link.png) |
 | UI-05 | Edit link | Dialog | Links row ⋯ › `Edit link…`; UI-09 | [edit-link.png](ui/redesign-2026-11/edit-link.png) |
 | UI-06 | Exclude subfolders | Dialog | Links row ⋯ › `Exclude subfolders…`; UI-05 | [exclude-subfolders.png](ui/redesign-2026-11/exclude-subfolders.png) |
-| UI-07 | New link preview | Dialog (Changes in new-link mode) | UI-04 `Preview link`; UI-05 `Preview changes` | [new-link-preview.png](ui/redesign-2026-11/new-link-preview.png) |
+| UI-07 | New link preview | Dialog (Changes in new-link mode) | UI-04 `Preview link`; UI-05 `Preview changes` | [Folder tree](ui/redesign-2026-11/new-link-tree.png) |
 | UI-08 | Changes tab | Window tab | Main Panel `Status`, `Sync` with Needs-you items, running Sync; tab | [changes.png](ui/redesign-2026-11/changes.png), [changes-expanded.png](ui/redesign-2026-11/changes-expanded.png), [changes-syncing.png](ui/redesign-2026-11/changes-syncing.png), [changes-up-to-date.png](ui/redesign-2026-11/changes-up-to-date.png) |
 | UI-09 | Folder Unavailable | Dialog | Links `Reconnect…`; status strip | [folder-unavailable.png](ui/redesign-2026-11/folder-unavailable.png) |
 | UI-10 | Ignored files and folders / Ignore path | Dialog | Links toolbar ⋯; window ⋯; Changes row ⋯; conflict `Ignore…` | [ignored.png](ui/redesign-2026-11/ignored.png), [ignore-path.png](ui/redesign-2026-11/ignore-path.png) |
@@ -167,6 +167,7 @@ flowchart LR
 3. No persistent text labels in either orientation. Action names and state descriptions are available through tooltips; keep keyboard activation and visible focus.
 4. Remove the plugin-owned header. Prefer also hiding the native Premiere tab/header if a supported mechanism is verified; leaving native chrome is acceptable if hiding is unavailable.
 5. Badge variant A — see States. Sync uses an animated working indicator, preferably a circle/spinner. While busy, clicking it opens the window on Changes with live process details and never starts a second run. Stop the animation when work ends or fails.
+6. While adding videos to the timeline, a slim bar inside Sync shows the number processed out of the selected videos. The tooltip and accessible name include the counter. Hide the bar when that stage ends.
 
 **Controls:**
 
@@ -343,14 +344,15 @@ Saving creates or removes `Folder and subfolders` ignore rules for this link (UI
 **Differences from UI-08:**
 
 - eyebrow `NEW LINK · PREVIEW`, title `<bin> ↔ <folder>`, reuse summary (`82 files already in the project are reused, nothing is duplicated. Nothing changes until you confirm.`);
-- `Ready to apply` grouped by `Folder` by default: folder already in the project (check mark, no checkbox, `N files reused`); folder with relinks (`2 renamed and 1 moved will be relinked`); `new bin` folders with file count, size, first file names (`A003_C001…, A003_C002…, +7`) and tags (`1 TXT skipped`); excluded folders muted with `excluded`; a file waiting for a decision says so in its folder line;
+- `Ready to apply` defaults to `Folder`. Show the disk hierarchy with indentation and a disclosure arrow on each expandable folder. Opening a folder reveals its direct children. Closing it keeps all selections. A folder checkbox selects the eligible changes in its subtree. Preserve file summaries, rename/move information, `new bin`, TXT warning tags and muted `excluded` rows;
+- show the reuse total above the changes. Place the details in a separate, initially collapsed disclosure below the actions, also available when grouped by `Type`. A branch containing only reused items takes no space in the main tree;
 - folder ⋯ menu: `Exclude this folder` (hint `Not synced; nothing in Premiere is touched`), `Show all N files`, `Ignore a file…`;
 - the `Add new videos to timeline` row works as in UI-08;
 - footer: `N files wait for your decision`, `Cancel`, primary `Link and apply N changes`.
 
 The expected duplicates-created count is zero; existing matching bins/items are reused.
 
-**Reference:** [new-link-preview.png](ui/redesign-2026-11/new-link-preview.png) (folder menu open on `_renders`).
+The updated folder layout is shown with two expanded branches and reuse details collapsed. The earlier board still defines the folder menu. [Folder tree](ui/redesign-2026-11/new-link-tree.png) · [Static HTML](ui/redesign-2026-11/new-link-tree.html) · [Folder menu](ui/redesign-2026-11/new-link-preview.png)
 
 ---
 
@@ -395,6 +397,7 @@ Native evidence for these rules was collected on the pre-redesign UI: [timeline/
 - spinner, `Applying N changes · <stage>` and `<m:ss> elapsed`;
 - current file name with its folder path;
 - progress bar and `12 of 19 files` only when the stage has known counters; otherwise no bar and no invented percent. During a long host/filesystem wait the card shows the last known stage and how long it has been waiting;
+- after confirming a batch with timeline inserts, the editor regains focus. Clicking the working Sync icon or Status opens Changes to inspect progress. The timeline stage counts processed videos;
 - hint `Closing this window does not stop Sync`;
 - stage list: done (green check + duration or `8 done · 3.0 s`), current (spinner, bold, counter), upcoming (muted ring + planned amount);
 - warnings so far, one line each (`A003_C004_1103XK.txt · line 4 — TXT skipped, the video imports`).
@@ -477,7 +480,7 @@ Other available links may continue syncing.
 | UI-02B | [settings.png](ui/redesign-2026-11/settings.png) | Settings rows, autosave footer |
 | UI-04 | [add-link.png](ui/redesign-2026-11/add-link.png) | Three steps, destination options, bin dropdown with Project root |
 | UI-06 | [exclude-subfolders.png](ui/redesign-2026-11/exclude-subfolders.png) | Folder tree with media count and size, excluded folders |
-| UI-07 | [new-link-preview.png](ui/redesign-2026-11/new-link-preview.png) | New-link mode, folder grouping, folder ⋯ menu |
+| UI-07 | [Folder tree](ui/redesign-2026-11/new-link-tree.png) · [2026-11-06 board](ui/redesign-2026-11/new-link-preview.png) | Runtime reference for the tree from issues #3–4. The earlier board remains the reference for the folder menu. |
 | UI-03 | [history.png](ui/redesign-2026-11/history.png) | Run list, changes of a run with an expanded group |
 | UI-03 | [history-failed.png](ui/redesign-2026-11/history-failed.png) | Failed run: what went wrong |
 | UI-08 | [changes-syncing.png](ui/redesign-2026-11/changes-syncing.png) | Current process card, stage list, waiting Needs-you row |

@@ -5,8 +5,8 @@ class Progress {
     this.phase="Starting";this.current="";this.completed=0;this.total=null;
     this.warnings=[];this.errors=[];this.events=[];
   }
-  update(phase,{current="",completed=0,total=null}={}) {
-    const changed=this.phase!==phase;this.phase=phase;this.current=current;this.completed=completed;this.total=total;this.updatedAt=Date.now();
+  update(phase,{current="",completed=0,total=null,unit="operations"}={}) {
+    const changed=this.phase!==phase;this.phase=phase;this.current=current;this.completed=completed;this.total=total;this.unit=unit;this.updatedAt=Date.now();
     if(changed)this.events.push({time:this.updatedAt,message:phase});
     this.events=this.events.slice(-40);
   }

@@ -21,16 +21,35 @@ function setup({observer=true,width=50,height=250}={}) {
   const timers=new Map();let timerId=0;
   const node=()=>({style:{},attrs:{},events:{},className:"",textContent:"",disabled:false,setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k];}});
   const root=node(),actions=node(),links=node(),sync=node(),status=node(),badge=node(),attention=node(),spinner=node(),syncIcon=node();
+  const progress=node(),fill=node();
   const dots=Array.from({length:8},node),icons=[node(),syncIcon,spinner,node()];
   spinner.querySelectorAll=()=>dots;
-  Object.assign(root,{clientWidth:width,clientHeight:height,querySelector:s=>({".main-actions":actions,"#links":links,"#sync":sync,"#status":status,"#badge":badge,"#attention":attention,"#sync-spinner":spinner,"#sync-icon":syncIcon})[s],querySelectorAll:()=>icons});
+  Object.assign(root,{clientWidth:width,clientHeight:height,querySelector:s=>({".main-actions":actions,"#links":links,"#sync":sync,"#status":status,"#badge":badge,"#attention":attention,"#sync-spinner":spinner,"#sync-icon":syncIcon,"#timeline-progress":progress,"#timeline-progress-fill":fill})[s],querySelectorAll:()=>icons});
   const context={module:{exports:{}},require:id=>require(path.resolve("plugin",id)),setInterval(fn){timers.set(++timerId,fn);return timerId;},clearInterval(id){timers.delete(id);}};
   if(observer)context.ResizeObserver=class{constructor(fn){this.fn=fn;}observe(el){this.target=el;}disconnect(){this.disconnected=true;}};
   vm.runInNewContext(fs.readFileSync("plugin/main-panel.js","utf8"),context);
   const panel=new context.module.exports.MainPanel(root);panel.start();
   const state={busy:false,batch:{changes:Array.from({length:17},()=>({kind:"new-file"})),warnings:[],hasBlocking:false},error:null};
-  return {panel,root,links,sync,status,badge,attention,spinner,syncIcon,dots,timers,state};
+  return {panel,root,links,sync,status,badge,attention,spinner,syncIcon,progress,fill,dots,timers,state};
 }
+test("compact Sync shows measured timeline progress and clears it on stage change or failure",()=>{
+  const x=setup();
+  x.state.busy=true;
+  x.state.operation={unit:"videos",completed:1,total:4};
+  x.panel.update(x.state);
+  assert.equal(x.fill.style.width,"25%");
+  assert.equal(x.progress.style.display,"block");
+  assert.match(x.sync.attrs["aria-label"],/1 of 4 videos/);
+  x.state.operation={phase:"Final project verification"};
+  x.panel.update(x.state);
+  assert.equal(x.progress.style.display,"none");
+  x.state.busy=false;
+  x.state.error="Target closed";
+  x.panel.update(x.state);
+  assert.equal(x.progress.style.display,"none");
+  assert.equal(x.attention.style.display,"block");
+  x.panel.destroy();
+});
 test("blocking/error/warning preserves numeric count and exposes separate attention; unavailable disables sync",()=>{
   const x=setup();x.state.batch.hasBlocking=true;x.panel.update(x.state);
   assert.equal(x.badge.textContent,"17");assert.equal(x.attention.style.display,"block");assert.equal(x.sync.disabled,false);

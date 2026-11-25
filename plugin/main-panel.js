@@ -10,6 +10,8 @@ class MainPanel {
     this.sync=root.querySelector("#sync"); this.status=root.querySelector("#status");
     this.badge=root.querySelector("#badge"); this.attention=root.querySelector("#attention");
     this.spinner=root.querySelector("#sync-spinner"); this.syncIcon=root.querySelector("#sync-icon");
+    this.timelineProgress=root.querySelector("#timeline-progress");
+    this.timelineFill=root.querySelector("#timeline-progress-fill");
     this.dots=[...this.spinner.querySelectorAll("circle")]; this.frame=0; this.count=0;
   }
   start() {
@@ -70,8 +72,16 @@ class MainPanel {
     this.sync.disabled=!this.busy&&unavailable;
     this.sync.className="main-action"+(this.sync.disabled?" disabled":"")+(this.busy?" working":"");
     this.sync.setAttribute("aria-disabled",String(this.sync.disabled));
-    this.sync.setAttribute("title",this.busy?"Sync in progress — click for details":unavailable?"Sync unavailable — open Status to reconnect the source":"Sync — scan and sync this project");
-    this.sync.setAttribute("aria-label",this.busy?"View sync progress":"Sync");
+    const op=controller.operation;
+    const showTimeline=this.busy && op?.unit==="videos" && op.total>0;
+    this.timelineProgress.style.display=showTimeline?"block":"none";
+    let progressLabel="Sync in progress";
+    if(showTimeline){
+      this.timelineFill.style.width=Math.min(100,100*op.completed/op.total)+"%";
+      progressLabel=`Adding to the timeline · ${op.completed} of ${op.total} videos processed`;
+    }
+    this.sync.setAttribute("title",this.busy?progressLabel+" — click for details":unavailable?"Sync unavailable — open Status to reconnect the source":"Sync — scan and sync this project");
+    this.sync.setAttribute("aria-label",this.busy?progressLabel+" — view details":"Sync");
     this.status.className="main-action"+(attention?" needs-attention":"");
     this.status.setAttribute("title",`${n} changes waiting · ${state.needs} need you${warnings?` · ${warnings} TXT skipped`:""}${state.needs?" · Sync opens the Changes tab first":""}`);
     this.badge.textContent=String(n); this.badge.style.display=n?"block":"none";

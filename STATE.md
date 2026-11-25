@@ -1,6 +1,6 @@
 # Footage Sync — Development State
 
-> Current development truth, updated 2026-11-13. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
+> Current development truth, updated 2026-11-25. Product contract remains in SPEC.md; screen contract remains in docs/UI_SPEC.md.
 
 ### MCP — deferred future vision, 2026-11-06
 
@@ -14,9 +14,21 @@
 
 ## Current phase
 
-### Current source — UI redesign, 2026-11-06
+### Current source — issues #1–4
 
-[VALIDATED — user workflow feedback, 2026-11-13] Пользователь поработал с новым интерфейсом в Premiere и сообщил, что в целом всё работает нормально; пакет redesign принят для коммита. Это практическая пользовательская проверка, не полная scripted native/keyboard/DPI acceptance. Известные отдельные проблемы остаются открыты: [#1 — медленный Import to timeline и блокировка Premiere](https://github.com/VslyDream/footage-sync/issues/1), [#2 — постоянное предупреждение пустого Marker TXT и attention Review](https://github.com/VslyDream/footage-sync/issues/2).
+- **Timeline.** Apply used to reopen the Changes modal while the batch was running. Premiere UXP modals capture editor input until closed. The host exposes asynchronous sequence import and synchronous, undoable project transactions. [Adobe modal behavior](https://developer.adobe.com/premiere-pro/uxp/plugins/tutorials/add-modal-dialogs/) · [Project API](https://developer.adobe.com/premiere-pro/uxp/ppro-reference/classes/project)
+- **Mapping cost.** On Node 24.11, a checkpoint over 1,000 synthetic clips, 400 managed files and 40 folders took a median of 350.54 ms before indexing and 1.38 ms after indexing (seven timed samples each). Both runs produced the same SHA256 for the serialized mappings. [Before](artifacts/issues-1-4/checkpoint-before.json) · [After](artifacts/issues-1-4/checkpoint-after.json)
+- **[VALIDATED] Timeline in Premiere 25.6.2.** Two baseline runs took 6.834 and 5.728 s. Two interleaved current runs took 5.947 and 5.840 s on the same seven MP4s in one session. First insert with a native date title accounted for 4.26–5.49 s. Total times overlap. A separate run through Changes released the modal in 44 ms, showed progress and completed in 6.264 s. The maximum interval of a 50 ms UXP timer was 51 ms. In all five projects V1/A1 contained the seed plus seven clips, V2 contained one title covering 2–9 s, and all seven receipts and Fill Frame values matched the baseline. A repeat scan found zero changes. The Type Tool returned a null ProjectItem in this host, so the existing managed-title fallback was also exercised. SHA256 matched for all 11 source media samples checked. [Independent comparison](artifacts/issues-1-4/native-verification.json) · [Native UI run](artifacts/timeline-performance/paired-current-ui/result.json)
+- **Empty marker TXT.** The scanner previously returned the same warning on every pass. The project sidecar now records which empty TXT version was processed for each verified clip. A successful Sync or closing Changes after viewing the warning acknowledges that version. Renewed input, other TXT errors and unresolved changes retain their normal handling.
+- **New link.** Folder view shows pending changes in their disk hierarchy. Folding a branch preserves selections. Reused files have a summary in the header and their own collapsed disclosure. Checking ancestor bins now visits each ancestor once, including on deep folder trees.
+- **Project settings and marker warnings.** Saves for one project now write snapshots in order. A regression delays the Settings rename while Changes acknowledges an empty TXT. Another makes the first write fail, then verifies the queued write through a Windows path alias.
+- **[VALIDATED] Editor input during Apply.** A fresh probe matching all 34 production source files appended 35 clips across five dates in 28.188 s. Changes released focus in 28 ms. Two clicks on the Premiere timeline ruler moved the playhead during the run, independently recorded while 7 and 21 videos had been processed. The result was 36 V1 and 36 A1 items including the seed, five adjoining date titles, 35 receipts and zero repeat changes. The seven-clip comparisons above used the same timeline code before project-sidecar writes were serialized. [Final-source run](artifacts/timeline-performance/editor-final/result.json)
+- **[VALIDATED] Native Changes and New link.** For existing footage, viewing Changes cleared the empty-TXT warning and Status attention through a repeat scan and reopen. Editing the empty file or supplying invalid text restored attention. Two same-named Assets folders appeared under their own parents. Unchecking a file reduced Apply from 6 to 5 and survived folding and reopening its branch. Reuse details expanded to show Archive. Cancel preserved the original bin. The Spectrum synthetic change event failed in this probe, so the remaining tree interactions were verified with real clicks. Applying this particular partial selection is covered by automated tests. [Native UI observations](artifacts/issues-1-4/marker-preview/run-2/native-ui-observations.txt)
+- **Installation and automated checks.** The installer completed with Premiere closed. The installed copy matches all 34 runtime files by SHA256. All 178 Node tests passed with the project fixture TEMP directory, plus syntax checks on 29 JS files and the manifest. Headless Edge exercised 14 dialog states. The New link fixture included 373 reused clips and two branches with an Assets folder. [Installed hashes](artifacts/issues-1-4/installed.json) · [Tests](artifacts/issues-1-4/tests.txt) · [Browser results](artifacts/ui-redesign/browser-result.json) · [Tree reference](docs/ui/redesign-2026-11/new-link-tree.png)
+
+### UI redesign baseline
+
+[VALIDATED — user workflow feedback, 2026-11-13] Пользователь проверил redesign в Premiere и принял его для коммита. Последующие изменения timeline, TXT и preview описаны выше.
 
 [VALIDATED — automated/browser] Реализована основная runtime-версия утверждённого redesign: одно окно Changes / History / Links / Settings; Needs you / Ready to apply, группы/галочки, решения MP4/TXT, row/window menus, сохраняемый выбор при Ignore/markers/pickers; единый Add/Edit link с bin tree/root, New-link preview, Exclude subfolders, derived Unavailable и recovery dialog; Settings autosave с двумя режимами; History выполненных изменений/ошибки этапа и live process card. Timeline — зависимая опция видео без двойного счёта, per-file opt-out сохраняется; unselected parent bin удерживает дочерний импорт. Main Panel — blue count + amber Needs-you count, Sync dot, минимум 28 content px с прокруткой. SPEC/UI_SPEC не изменялись.
 
@@ -24,11 +36,9 @@
 
 [VALIDATED — native mechanism probe only] Premiere 25.6.2: изолированная probe без project mutation/persistence/polling. Проверены small Main Panel/scroll, Links → Settings → Changes в одном окне, ⋯ menu, Ignore dialog/возврат к Settings, Import original → изменение Apply count, раскрытие Footage и выбор Video, настоящий Windows Browse → Cancel с сохранением Footage/Video. Проекты пользователя не открывались; Premiere закрыт штатно. Final cosmetic/process/preview refinements покрыты browser/checks; полная native mutation acceptance новой UI ещё не завершена. DPI/keyboard/workspace matrix остаётся open.
 
-[SPIKE — temporarily deferred] Copy full path disabled: Adobe требует clipboard permission, которого нет в manifest; новый permission без product decision не добавлялся. Большие/network/Lucid summaries не профилированы. History требует golden-pass длинных папок с Show N more, New-link preview — полного nested reuse/move composition. Last-available сохраняется при следующем explicit checkpoint, без записи sidecar каждые 5 s. AUTO notifications/helper/Production Undo/macOS остаются прежними gaps. Подробности/источники — acceptance выше.
+[SPIKE] Copy full path требует решения о clipboard permission. Остаются profiling больших/network/Lucid folders, длинные списки History с Show N more, AUTO notifications, helper, Production Undo и macOS. Last-available сохраняется при следующем explicit checkpoint.
 
 [VALIDATED — installation] Final runtime установлен через scripts/install-dev.ps1 при закрытом Premiere; **33/33 SHA256 match, no extras** (artifacts/ui-redesign/installed.json). Изолированная redesign-probe удалена после проверки. Installation не означает final native acceptance. Release/CCX не публиковались.
-
-[VALIDATED — commit checks, 2026-11-13] Повторно прошли 155 tests и 28-module/manifest check; установленная сборка перед подготовкой коммита совпала 33/33. Затем в redesign.css нормализованы только окончания строк для git diff --check. Повторная установка остановлена защитой installer: Premiere работает. Установленная CSS отличается от коммита только окончаниями строк; при следующем закрытии Premiere выполнить install-dev.ps1 и verify-dev-install.ps1. Новых native проверок в этой сессии не было.
 
 
 [LOCKED — user request/answer 2026-11-04] Автоматический Fill Frame реализуется собственным масштабированием при проверенном совпадении со штатной командой; это заменяет прежний ручной шаг. Потерянная native ссылка import project восстанавливается поиском того же сохранённого пути при штатном polling. Имя Type Tool клипа — имя папки без префикса.
@@ -162,7 +172,7 @@ Official evidence и local findings разделены в IMPLEMENTATION_NOTES. 
 
 ## Next
 
-UI redesign: на отдельном fixture project выполнить final-source native mutation acceptance для Add/Edit/preview, partial Apply, Exclude Save/Restore, marker picker, History/progress; затем keyboard/DPI/workspace и large/network profiling. Довести long-folder History / nested reuse preview по golden boards. Copy full path требует решения о clipboard permission; до него control disabled. Текущая dev-сборка установлена и сверена отдельно от host acceptance.
+Следующий performance-прогон — рабочая секвенция с сотнями уже смонтированных клипов и сетевым media. Основная стоимость на небольшой выборке приходится на первый нативный титр. В UI-матрице остаются Edit/reconnect, partial Apply, Exclude Save/Restore, marker picker, History, keyboard/DPI/workspace и сетевое хранилище. Для Copy full path требуется решение о clipboard permission.
 
 Текущая source с project recovery, plain title names и automatic Fill Frame установлена; native comparison семи форматов и fresh footage/audio/Type Tool import завершены. [Current acceptance](docs/RECONNECT_FILL_ACCEPTANCE.md). Следующие проверки: second-editor locks, native sequence interruption/Undo, representative audio/timecode layouts, rotation/default Scale-to-Frame preference, другие frame/PAR targets, long-running AUTO и large/network profiling. Release assets этим запросом не публиковались.
 

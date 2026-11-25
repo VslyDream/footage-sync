@@ -56,7 +56,7 @@ class Scanner {
       const stamp=size+":"+mtime+":"+source.identity,key="txt:"+P.key(path);let cached=this.cache.get(key);
       if(!cached||cached.stamp!==stamp) {
         const parsed=parseMarkers(await fs.readFile(path,{encoding:"utf-8"}));
-        cached={stamp,markers:parsed.markers,signature:signature(parsed.markers),error:parsed.errors.map(e=>(e.line?"Line "+e.line+": ":"")+e.message).join(" ")};
+        cached={stamp,markers:parsed.markers,signature:signature(parsed.markers),empty:parsed.errors[0]?.code==="empty",error:parsed.errors.map(e=>(e.line?"Line "+e.line+": ":"")+e.message).join(" ")};
         await this.validate(source);this.cache.set(key,cached);
       }
       return {...source,...cached};

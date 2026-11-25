@@ -97,4 +97,4 @@ function planSync({ links, scans, inventory, records = {} }) {
   for(const [linkId,record] of Object.entries(next)) record.files=record.files.filter(f=>!owners.has(f.itemId) || owners.get(f.itemId)===linkId);
   return {changes,reused,next,hasBlocking:changes.some(c=>c.blocking)};
 }
-module.exports = { planSync };
+module.exports = { planSync, groupBy };

@@ -2,7 +2,7 @@
 // Browser-only review fixture: real UI source, fake Premiere/UXP data, no project mutations.
 const fs=require("node:fs"),path=require("node:path"),http=require("node:http");
 const sources={};
-for(const name of ["core/paths","core/footage-dates","core/ignore","core/ui-data","core/changes-view","core/process-view","core/panel-layout","core/progress","main-panel","workspace-ui","ui"])sources["./"+name]=fs.readFileSync(path.join(__dirname,"../plugin",name+".js"),"utf8");
+for(const name of ["core/paths","core/footage-dates","core/ignore","core/ui-data","core/changes-view","core/preview-tree","core/process-view","core/panel-layout","core/progress","main-panel","workspace-ui","ui"])sources["./"+name]=fs.readFileSync(path.join(__dirname,"../plugin",name+".js"),"utf8");
 const css=fs.readFileSync(path.join(__dirname,"../plugin/style.css"),"utf8")+fs.readFileSync(path.join(__dirname,"../plugin/redesign.css"),"utf8");
 const html=`<!doctype html><meta charset="utf-8"><title>Footage Sync · UI review fixture</title><style>${css}
 body{padding:24px}button{margin:8px;padding:12px;background:#303034;color:#eee;border:1px solid #555;border-radius:4px}dialog{position:fixed;inset:0;margin:auto}sp-button{display:inline-block;padding:9px 14px;background:#353539;border:1px solid #555;border-radius:4px;text-align:center;cursor:pointer}sp-button[variant=cta]{background:#2671c4}sp-button[disabled]{opacity:.5;pointer-events:none}sp-textfield{display:block}sp-textfield input{box-sizing:border-box;width:100%;padding:9px;background:#1e1e22;color:#eee;border:1px solid #555;border-radius:4px}sp-checkbox{display:inline-flex;align-items:center;margin-top:10px}sp-checkbox input{margin-right:6px}.preview-note{max-width:700px}</style>

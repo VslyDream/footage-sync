@@ -1,6 +1,6 @@
 "use strict";
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm"),path=require("node:path");
-function setup() {
+function setup(markers={analyze:async()=>({media:[],warnings:[],changes:[]})}) {
   const project={path:"D:/Prod/Footage.prproj",name:"Footage"}, log=[];
   const data={version:1,links:[{id:"a",binId:"b",binPath:"Video",folderPath:"D:/Media",subfolders:true}],settings:{mode:"ASK",mp4:"ASK"},records:{},history:[]};
   const inv={bins:[{id:"b",path:"Video"}],clips:[],handles:new Map()};
@@ -8,15 +8,139 @@ function setup() {
   let available=true;
   const host={resolveProject:async binding=>available&&binding?.path===project.path?project:null,ppro:{Project:{getActiveProject:async()=>active}},inventory:async()=>inv,applyChange:async(p,c)=>{assert.equal(p,project);log.push(c);if(c.kind==="new-file"||c.kind==="fragmented") inv.clips.push({id:"c"+log.length,mediaPath:c.path,parentPath:c.target});}};
   const store={loadWorkspace:async()=>({version:1,importProject:{path:project.path,name:project.name}}),saveWorkspace:async()=>{},defaults:()=>JSON.parse(JSON.stringify(data)),load:async()=>JSON.parse(JSON.stringify(data)),save:async()=>{log.push({kind:"persist"});},diagnostic:async()=>{}};
-  const sequence={receipts:[],async snapshot(){return {ledger:{imports:this.receipts},fingerprint:JSON.stringify(this.receipts)};},async apply(entry,item,save){entry.attempt={start:0};await save();log.push({kind:"append",path:entry.path});this.receipts.push({key:entry.key});},async keep(entry){this.receipts.push({key:entry.key});}};
+  const sequence={receipts:[],async readReceipts(){return {imports:this.receipts};},async snapshot(){return {ledger:{imports:this.receipts},fingerprint:JSON.stringify(this.receipts)};},async apply(entry,item,save){entry.attempt={start:0};await save();log.push({kind:"append",path:entry.path});this.receipts.push({key:entry.key});},async keep(entry){this.receipts.push({key:entry.key});}};
   class Scanner {async scan(){return {dirs:[{rel:"",identity:"dir"}],files};} async validate(f){if(!files.some(x=>x.path===f.path && x.size===f.size && x.mtime===f.mtime)) throw new Error("Source changed after analysis.");}}
   const filename=path.resolve("plugin/controller.js"), mod={exports:{}};
   const wrapper=vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename});
-  wrapper(id=>id==="./host/premiere"?host:id==="./host/store"?store:id==="./host/sequence"?sequence:id==="./host/filesystem"?{Scanner}:id==="./host/marker-service"?{analyze:async()=>({media:[],warnings:[],changes:[]})}:require(path.resolve("plugin",id)),mod,mod.exports);
+  wrapper(id=>id==="./host/premiere"?host:id==="./host/store"?store:id==="./host/sequence"?sequence:id==="./host/filesystem"?{Scanner}:id==="./host/marker-service"?markers:require(path.resolve("plugin",id)),mod,mod.exports);
   const c=new mod.exports.Controller();return {c,log,inv,host,store,sequence,setAvailable:v=>available=v,setActive:p=>active=p,setFiles:f=>files=f,project};
 }
 test("scan does not mutate the project or persist a link",async()=>{
   const x=setup();await x.c.scan();assert.equal(x.c.batch.changes.length,1);assert.equal(x.log.length,0);
+});
+
+function emptyMarkerFixture(){
+  const filename=path.resolve("plugin/host/marker-service.js"),mod={exports:{}};
+  vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename})(
+    id=>id.startsWith("../core/")?require(path.resolve("plugin/host",id)):{},mod,mod.exports);
+  const x=setup(mod.exports),video={path:"D:/Media/a.mp4",rel:"a.mp4",identity:"video",size:100,mtime:1};
+  const txt={path:"D:/Media/a.txt",empty:true,stamp:"0:1:txt",error:"Marker TXT is empty."};
+  x.setFiles([video]);
+  const scan=x.c.scanner.scan.bind(x.c.scanner);
+  x.c.scanner.scan=async()=>({...await scan(),txts:[txt]});
+  return {...x,txt};
+}
+test("empty TXT import warns until the clip is verified, then repeated Sync, scan and reopen are quiet",async()=>{
+  const x=emptyMarkerFixture();
+  let batch=await x.c.scan();
+  assert.equal(batch.hasBlocking,false);
+  assert.equal(batch.warnings.length,1);
+  await x.c.apply(batch,[]);
+  assert.equal(x.c.batch.warnings.length,1);
+  const apply=x.host.applyChange;
+  x.host.applyChange=async()=>{throw Error("Import failed");};
+  await assert.rejects(()=>x.c.apply(x.c.batch),/Import failed/);
+  assert.equal(x.c.data.emptyMarkerReceipts,undefined);
+  x.host.applyChange=apply;
+  await x.c.apply(await x.c.scan());
+  assert.equal(x.inv.clips.length,1);
+  assert.deepEqual(x.c.batch.warnings,[]);
+  await x.c.apply(await x.c.scan());
+  const restart=emptyMarkerFixture();
+  restart.inv.clips.push(...x.inv.clips);
+  restart.store.load=async()=>JSON.parse(JSON.stringify(x.c.data));
+  batch=await restart.c.scan();
+  assert.deepEqual(batch.warnings,[]);
+  assert.deepEqual(batch.changes,[]);
+  restart.txt.stamp="0:2:txt";
+  assert.equal((await restart.c.scan()).warnings.length,1);
+});
+test("a newly found empty TXT for existing media is reported until Sync or viewing Changes",async()=>{
+  const x=emptyMarkerFixture();
+  x.inv.clips.push({id:"existing",mediaPath:"D:/Media/a.mp4",parentPath:"Video"});
+  const first=await x.c.scan();
+  let batch=await x.c.scan();
+  assert.equal(batch.changes.length,0);
+  assert.equal(batch.warnings.length,1);
+  await x.c.acknowledgeMarkerWarnings(first);
+  assert.equal(x.c.data.emptyMarkerReceipts,undefined);
+  const save=x.store.save;
+  x.store.save=async()=>{throw Error("Read only");};
+  await assert.rejects(()=>x.c.acknowledgeMarkerWarnings(batch),/Read only/);
+  assert.equal(batch.warnings.length,1);
+  x.store.save=save;
+  await x.c.acknowledgeMarkerWarnings(batch);
+  assert.deepEqual(x.c.batch.warnings,[]);
+  assert.deepEqual((await x.c.scan()).warnings,[]);
+  x.txt.stamp="0:3:txt";
+  batch=await x.c.scan();
+  assert.equal(batch.warnings.length,1);
+  await x.c.apply(batch);
+  assert.deepEqual(x.c.batch.warnings,[]);
+});
+
+test("an in-flight Settings save commits before Changes acknowledges an empty TXT",async t=>{
+  const x=emptyMarkerFixture(),io=require("../plugin/host/io"),store=require("../plugin/host/store");
+  x.inv.clips.push({id:"existing",mediaPath:"D:/Media/a.mp4",parentPath:"Video"});
+  const batch=await x.c.scan(),warning=batch.warnings[0];
+  x.store.save=store.save;
+  const settingsRename=Promise.withResolvers(),releaseSettings=Promise.withResolvers();
+  const files=new Map(),written=[],committed=[];
+  t.mock.method(io,"writeFile",async(file,content)=>{
+    written.push(JSON.parse(content));
+    files.set(file,content);
+  });
+  t.mock.method(io,"rename",async(from,to)=>{
+    if(written.length===1){settingsRename.resolve();await releaseSettings.promise;}
+    assert.ok(files.has(from));
+    committed.push(JSON.parse(files.get(from)));
+    files.set(to,files.get(from));
+    files.delete(from);
+  });
+
+  x.c.data.settings={...x.c.data.settings,mode:"AUTO"};
+  const settingsSave=x.c.persist();
+  await settingsRename.promise;
+  const acknowledgement=x.c.acknowledgeMarkerWarnings(batch);
+  const saved=Promise.allSettled([settingsSave,acknowledgement]);
+  await new Promise(setImmediate);
+  const writesBeforeRelease=written.length;
+  x.c.data.settings.mode="ASK";
+  releaseSettings.resolve();
+  assert.deepEqual((await saved).map(result=>result.status),["fulfilled","fulfilled"]);
+
+  assert.equal(writesBeforeRelease,1);
+  assert.deepEqual(committed.map(value=>value.settings.mode),["AUTO","AUTO"]);
+  assert.equal(committed[0].emptyMarkerReceipts,undefined);
+  assert.deepEqual(committed[1].emptyMarkerReceipts,{existing:warning.emptyVersion});
+  assert.deepEqual(batch.warnings,[]);
+});
+
+test("a failed sidecar write releases the next queued snapshot",async t=>{
+  const io=require("../plugin/host/io"),store=require("../plugin/host/store");
+  const firstWrite=Promise.withResolvers(),releaseFailure=Promise.withResolvers();
+  const path="D:/Prod/StoreRecovery.prproj",value=store.defaults(),written=[];
+  const failure=new Error("Disk full");
+  t.mock.method(io,"writeFile",async(_file,content)=>{
+    written.push(JSON.parse(content));
+    if(written.length===1){firstWrite.resolve();await releaseFailure.promise;throw failure;}
+  });
+  const rename=t.mock.method(io,"rename",async()=>{});
+
+  const first=store.save(path,value);
+  await firstWrite.promise;
+  value.settings.mode="AUTO";
+  const second=store.save("d:\\prod\\storerecovery.prproj",value);
+  const saved=Promise.allSettled([first,second]);
+  value.settings.mode="ASK";
+  await new Promise(setImmediate);
+  const writesBeforeRelease=written.length;
+  releaseFailure.resolve();
+
+  assert.deepEqual(await saved,[{status:"rejected",reason:failure},{status:"fulfilled",value:undefined}]);
+  assert.equal(writesBeforeRelease,1);
+  assert.deepEqual(written.map(snapshot=>snapshot.settings.mode),["ASK","AUTO"]);
+  assert.equal(rename.mock.callCount(),1);
 });
 
 test("a stale previous project guid does not block automatic reacquisition of the saved project",async()=>{
@@ -60,6 +184,25 @@ test("import checkpoints reuse verified inventory while preserving final reconci
   const batch=await x.c.scan();inventories=0;await x.c.apply(batch);
   assert.equal(inventories,3); // preflight, final checkpoint, final scan; import owns its before/after checks.
   assert.equal(x.c.operation.completed,1);assert.equal(x.c.operation.status,"completed");assert.equal(x.c.batch.changes.length,0);
+});
+
+test("checkpoint indexes preserve ambiguous paths, tombstones and unique verified IDs",async()=>{
+  const {c}=setup();
+  await c.context();
+  c.data.records.a={files:[{path:"D:/old.wav",itemId:"old"}],dirs:[]};
+  const plan={next:{a:{
+    files:[{path:"D:/media/A.wav"},{path:"D:/media/B.wav"}],
+    dirs:[{binPath:"Video/Takes"}]
+  }}};
+  const inventory={
+    clips:[{id:"a1",mediaPath:"D:/Media/a.wav"},{id:"a2",mediaPath:"d:/MEDIA/a.wav"},{id:"b1",mediaPath:"D:/Media/b.wav"}],
+    bins:[{id:"one",path:"Video/Takes"},{id:"two",path:"Video/Takes"}]
+  };
+  c.checkpoint(plan,inventory);
+  assert.deepEqual(c.data.records.a,{
+    files:[{path:"D:/old.wav",itemId:"old"},{path:"D:/media/B.wav",itemId:"b1"}],
+    dirs:[]
+  });
 });
 
 test("unavailable sources appear in current operation warnings without mutations",async()=>{
@@ -123,6 +266,25 @@ test("unsupported inline Ignore or Repackage decisions cannot authorize import o
 const target={projectPath:"D:/Prod/Selects.prproj",projectName:"Selects",sequenceId:"sequence",sequenceName:"Footage"};
 const dated=(name="clip1")=>({path:"D:/Media/2026-10-27/"+name+".mp4",rel:name+".mp4",size:100,mtime:1,identity:name});
 async function withSequence(){const x=setup();await x.c.context();x.c.data.settings.sequenceTarget=target;return x;}
+test("the listener receives final video progress before verification, including an append needing review",async()=>{
+  const x=await withSequence();
+  x.setFiles([dated("first"),dated("second")]);
+  const batch=await x.c.scan(),observed=[];
+  const apply=x.sequence.apply.bind(x.sequence);
+  x.sequence.apply=async(entry,item,save)=>{
+    if(entry.path===dated("second").path)throw Error("Title unavailable");
+    return apply(entry,item,save);
+  };
+  x.c.onChange(()=>{
+    const {phase,unit,completed,total}=x.c.operation;
+    if(unit==="videos"||phase==="Final project verification")observed.push([phase,completed,total]);
+  });
+  await x.c.apply(batch);
+  const appends=observed.filter(([phase])=>phase==="Appending to Footage sequence");
+  assert.deepEqual([...new Set(appends.map(([,completed,total])=>`${completed}/${total}`))],["0/2","1/2","2/2"]);
+  assert.equal(observed.at(-1)[0],"Final project verification");
+  assert.deepEqual(x.sequence.receipts.length,1);
+});
 test("new footage appends in date/name order and repeat sync leaves the sequence alone",async()=>{
   const x=await withSequence();x.setFiles([dated("clip10"),dated("clip2")]);await x.c.apply(await x.c.scan());
   assert.deepEqual(x.log.filter(v=>v.kind==="append").map(v=>v.path),[dated("clip2").path,dated("clip10").path]);

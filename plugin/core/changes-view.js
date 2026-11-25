@@ -17,15 +17,38 @@ function groups(changes,by="Type",batch={}) {
 }
 class ChangesState {
   constructor(){this.decisions=new Map();this.unchecked=new Set();this.expanded=new Set();this.groupBy="Type";this.scroll=0;this.indices=new WeakMap();}
-  sources(batch){let value=this.indices.get(batch);if(!value||value.changes!==batch.changes||value.length!==batch.changes.length){value={changes:batch.changes,length:batch.changes.length,paths:new Map(batch.changes.filter(media).map(c=>[P.key(c.path),c])),folders:batch.changes.filter(c=>c.kind==="new-folder")};this.indices.set(batch,value);}return value;}
+  sources(batch){
+    const changes=batch.changes, cached=this.indices.get(batch);
+    if(cached && cached.changes===changes && cached.length===changes.length)return cached;
+    const paths=new Map(), folders=new Map();
+    for(const c of changes){
+      if(media(c))paths.set(P.key(c.path),c);
+      if(c.kind==="new-folder"){
+        const path=P.key(c.path);
+        if(!folders.has(path))folders.set(path,[]);
+        folders.get(path).push(c);
+      }
+    }
+    const indices={changes,length:changes.length,paths,folders};
+    this.indices.set(batch,indices);
+    return indices;
+  }
   decide(c,value){this.decisions.set(changeKey(c),value);this.unchecked.delete(changeKey(c));}
   decision(c){return this.decisions.get(changeKey(c));}
   clearDeferred(){for(const [key,value] of this.decisions)if(value==="defer")this.decisions.delete(key);}
   check(c,value){if(value)this.unchecked.delete(changeKey(c));else this.unchecked.add(changeKey(c));}
   selected(c,batch){
     if(c.kind==="unavailable"||this.unchecked.has(changeKey(c)))return false;
-    const target=c.kind==="new-folder"?P.dirname(c.path):c.target;
-    if(target&&this.sources(batch).folders.some(parent=>parent!==c&&P.within(target,parent.path)&&!this.selected(parent,batch)))return false;
+    // Each required bin is already on this path. Recursing through every
+    // ancestor revisits the same prefixes exponentially in a deep preview.
+    const folders=this.sources(batch).folders;
+    let target=P.key(c.kind==="new-folder"?P.dirname(c.path):c.target);
+    while(target && folders.size){
+      if(folders.get(target)?.some(bin=>bin!==c && (needs(bin)||this.unchecked.has(changeKey(bin)))))return false;
+      const parent=P.dirname(target);
+      if(parent===target)break;
+      target=parent;
+    }
     const value=this.decision(c);
     if(needs(c)&&!(c.kind==="fragmented"&&value==="original")&&!(c.kind==="marker-choice"&&["replace","append","skip"].includes(value))&&!(c.kind==="sequence-review"&&["retry","keep"].includes(value)))return false;
     if((timeline(c)||["clip-markers","marker-choice"].includes(c.kind))&&!c.checkpoint&&value!=="keep"){

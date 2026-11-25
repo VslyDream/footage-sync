@@ -1,5 +1,6 @@
 "use strict";
 const fs=require("./io"), P=require("../core/paths");
+const projectWrites=new Map();
 const defaults=()=>({version:1,links:[],settings:{mode:"ASK",mp4:"ASK",warnings:true,success:false,autoMarkers:true},records:{},ignored:[],markerSources:{},markerObserved:{},history:[]});
 async function load(projectPath) {
   const path=P.clean(projectPath)+".footage-sync.json";
@@ -10,9 +11,16 @@ async function load(projectPath) {
   return {...defaults(),...value,settings:{...defaults().settings,...value.settings,mode:value.settings.mode==="MANUAL"?"ASK":value.settings.mode??"ASK",warnings:true}};
 }
 async function save(projectPath,value) {
-  const path=P.clean(projectPath)+".footage-sync.json", temp=path+".tmp";
-  await fs.writeFile(temp,JSON.stringify(value,null,2),{encoding:"utf-8"});
-  await fs.rename(temp,path);
+  const path=P.clean(projectPath)+".footage-sync.json", temp=path+".tmp", key=P.key(path);
+  const content=JSON.stringify(value,null,2);
+  const previous=projectWrites.get(key)||Promise.resolve();
+  const write=previous.catch(()=>{}).then(async()=>{
+    await fs.writeFile(temp,content,{encoding:"utf-8"});
+    await fs.rename(temp,path);
+  });
+  projectWrites.set(key,write);
+  try{await write;}
+  finally{if(projectWrites.get(key)===write)projectWrites.delete(key);}
 }
 async function diagnostic(value) { try { await fs.writeFile("plugin-data:/diagnostics.json",JSON.stringify(value,null,2),{encoding:"utf-8"}); } catch(e) { console.error(e); } }
 async function loadWorkspace() {

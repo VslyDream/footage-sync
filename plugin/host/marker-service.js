@@ -1,10 +1,13 @@
 "use strict";
 const P=require("../core/paths"),Core=require("../core/markers"),State=require("./marker-state"),Markers=require("./markers"),Import=require("./marker-import"),Ignore=require("../core/ignore");
+const {groupBy}=require("../core/planner");
 async function analyze({inventory,scans,plan,data,scanner,onProgress}) {
   const media=new Map(),warnings=[],changes=[];
+  const clipsByPath=groupBy(inventory.clips,clip=>P.key(clip.mediaPath));
   for(const [linkId,scan] of Object.entries(scans))for(const file of scan.files) {
-    const matches=inventory.clips.filter(c=>P.key(c.mediaPath)===P.key(file.path));
-    media.set(P.key(file.path),{path:file.path,name:matches.length===1?matches[0].name:null,itemId:matches.length===1?matches[0].id:null,file,linkId,txts:scan.txts||[]});
+    const key=P.key(file.path), matches=clipsByPath.get(key);
+    const clip=matches?.length===1?matches[0]:null;
+    media.set(key,{path:file.path,name:clip?.name??null,itemId:clip?.id??null,file,linkId,txts:scan.txts||[]});
   }
   for(const clip of inventory.clips)if(!media.has(P.key(clip.mediaPath)))media.set(P.key(clip.mediaPath),{path:clip.mediaPath,name:clip.name,itemId:clip.id,txts:[]});
   for(const [key,entry] of media)if(Ignore.matches(entry.path,data.ignored))media.delete(key);
@@ -22,7 +25,17 @@ async function analyze({inventory,scans,plan,data,scanner,onProgress}) {
     }
     if(!source)continue;
     entry.markerSource=source;
-    if(source.error){entry.markerIssue=source.error;warnings.push({path:entry.path,txtPath:source.path,message:source.error});continue;}
+    if(source.error){
+      const warning={path:entry.path,txtPath:source.path,message:source.error};
+      if(source.empty){
+        warning.emptyVersion=JSON.stringify([P.key(source.path),source.stamp,source.revision||0]);
+        warning.itemId=entry.itemId;
+        if(entry.itemId&&data.emptyMarkerReceipts?.[entry.itemId]===warning.emptyVersion)continue;
+      }
+      entry.markerIssue=source.error;
+      warnings.push(warning);
+      continue;
+    }
     // A source blocked by media/folder reconciliation cannot receive clip markers yet.
     if(plan.changes.some(c=>c.blocking&&P.key(c.path)===P.key(entry.path)))continue;
     let ledger={version:1,imports:[]},expected=null;

@@ -1,17 +1,35 @@
 "use strict";
-const H=require("./host/premiere"), Store=require("./host/store"), P=require("./core/paths"), {Scanner}=require("./host/filesystem"), {planSync}=require("./core/planner"), Markers=require("./host/marker-service");
+const H=require("./host/premiere"), Store=require("./host/store"), P=require("./core/paths"), {Scanner}=require("./host/filesystem"), {planSync,groupBy}=require("./core/planner"), Markers=require("./host/marker-service");
 const {Progress}=require("./core/progress");
+const {willAppend}=require("./core/process-view");
 const Dates=require("./core/footage-dates");
 const Ignore=require("./core/ignore");
 const {countChanges}=require("./core/changes-view");
 const sequenceChange=c=>["append-footage","sequence-review","sequence-error"].includes(c.kind);
+function emptyMarkerReceipts(previous,warnings,inventory){
+  const empty=(warnings||[]).filter(w=>w.emptyVersion);
+  if(!empty.length)return previous;
+  const clips=new Map();
+  for(const clip of inventory.clips){
+    const key=P.key(clip.mediaPath);
+    clips.set(key,clips.has(key)?null:clip.id);
+  }
+  let receipts=previous;
+  for(const warning of empty){
+    const itemId=clips.get(P.key(warning.path));
+    if(!itemId||(warning.itemId&&warning.itemId!==itemId)||receipts?.[itemId]===warning.emptyVersion)continue;
+    if(receipts===previous)receipts={...previous};
+    receipts[itemId]=warning.emptyVersion;
+  }
+  return receipts;
+}
 class Controller {
   constructor() { this.data=Store.defaults(); this.scanner=new Scanner(); this.project=null; this.path=""; this.busy=false; this.batch=null; this.error=null; this.listeners=[]; this.ticks=0; this.visible=false; this.dialogOpen=false; this.markerFailures=new Map(); }
   onChange(fn) { this.listeners.push(fn); }
   begin(label) { this.busy=true;this.operation=new Progress(label);this.lastProgressEmit=0;this.emit(); }
   progress(phase,detail) {
     if(!this.busy||!this.operation)return;
-    const changed=this.operation.phase!==phase;this.operation.update(phase,detail);
+    const changed=this.operation.phase!==phase || (detail?.unit==="videos" && this.operation.completed!==detail.completed);this.operation.update(phase,detail);
     if(changed||Date.now()-this.lastProgressEmit>100){this.lastProgressEmit=Date.now();this.emit();}
   }
   warn(message,path) {
@@ -100,9 +118,29 @@ class Controller {
         if(label.warning){plan.sequenceWarnings.push({path:change.path,message:label.warning});this.warn(label.warning,change.path);}
       }catch(e){plan.changes.push({id:String(plan.changes.length),kind:"sequence-error",blocking:true,path:change.path,entry:{key,path:change.path,target},message:e.message});}
     }
+    const observed=(this.data.sequenceObserved||[]).filter(entry=>!Ignore.matches(entry.path,this.data.ignored)&&!skipped.has(entry.key)&&JSON.stringify(entry.target)===JSON.stringify(target));
     let state,error;
     this.progress("Checking Footage sequence");
-    try{if(!target)throw new Error("Choose the Footage sequence in Links, or import files only.");state=await require("./host/sequence").snapshot(target);}catch(e){error=e.message;}
+    try{
+      if(!target)throw new Error("Choose the Footage sequence in Links, or import files only.");
+      const Sequence=require("./host/sequence");
+      // Idle polling only needs to detect Undo/lost receipts. Take the full
+      // reviewed timeline fingerprint whenever an append decision is possible.
+      if(!queued.size){
+        const saved=new Set((await Sequence.readReceipts(target)).imports.map(r=>r.key));
+        if(observed.every(entry=>saved.has(entry.key)))return {enabled:true,target};
+      }
+      state=await Sequence.snapshot(target);
+    }catch(e){error=e.message;}
+    const sourcesByPath=new Map();
+    if(queued.size && !error){
+      for(const [linkId,scan] of Object.entries(scans)){
+        for(const file of scan.files||[]){
+          const key=P.key(file.path);
+          if(!sourcesByPath.has(key))sourcesByPath.set(key,{linkId,file});
+        }
+      }
+    }
     for(const entry of [...queued.values()].sort(Dates.compare)){
       const fail=message=>{plan.changes.push({id:String(plan.changes.length),kind:"sequence-error",blocking:true,path:entry.path,entry,message});this.warn(message,entry.path);};
       if(error){fail(error);continue;}
@@ -111,12 +149,12 @@ class Controller {
         if((this.data.sequenceQueue||[]).some(e=>e.key===entry.key))plan.changes.push({id:String(plan.changes.length),kind:"append-footage",checkpoint:true,path:entry.path,date:entry.date,entry,message:"Confirm the completed sequence append. Existing edits are preserved."});
         continue;
       }
-      const source=Object.entries(scans).flatMap(([linkId,scan])=>(scan.files||[]).filter(f=>P.key(f.path)===P.key(entry.path)).map(file=>({linkId,file})))[0];
+      const source=sourcesByPath.get(P.key(entry.path));
       if(!source){fail("The pending sequence source is unavailable. Import files only to skip its append: "+entry.path);continue;}
       const review=Boolean(entry.attempt||entry.failure);
       plan.changes.push({id:String(plan.changes.length),kind:review?"sequence-review":"append-footage",blocking:review,path:entry.path,date:entry.date,entry,...source,message:review?(entry.failure||"An interrupted append needs review. Existing edits will not be duplicated automatically."):"Append to "+target.sequenceName+" · "+entry.date+" on V2"});
     }
-    if(state)for(const entry of this.data.sequenceObserved||[])if(!Ignore.matches(entry.path,this.data.ignored)&&!skipped.has(entry.key)&&JSON.stringify(entry.target)===JSON.stringify(target)&&!state.ledger.imports.some(r=>r.key===entry.key)&&!queued.has(entry.key)){
+    if(state)for(const entry of observed)if(!state.ledger.imports.some(r=>r.key===entry.key)&&!queued.has(entry.key)){
       plan.changes.push({id:String(plan.changes.length),kind:"sequence-review",blocking:true,path:entry.path,date:entry.date,entry,message:"A previous sequence receipt was undone or not saved. Keep the current sequence, append again, or import files only."});
     }
     return {enabled:true,target,fingerprint:state?.fingerprint,error};
@@ -168,7 +206,24 @@ class Controller {
     catch(e) { failure=e.message;this.error=e.message; throw e; }
     finally { await this.finish(failure,background); }
   }
-  async persist() { if(!this.path) throw new Error("No saved project is open."); await this.assertContext(this.path); await Store.save(this.path,this.data); }
+  async persist(data=this.data) {
+    const path=this.path;
+    if(!path)throw new Error("No saved project is open.");
+    await this.assertContext(path);
+    await Store.save(path,data);
+  }
+  async acknowledgeMarkerWarnings(batch){
+    if(this.busy||!batch||batch!==this.batch||batch.projectId!==this.projectId||P.key(batch.projectPath)!==P.key(this.path))return;
+    const previous=this.data.emptyMarkerReceipts;
+    const receipts=emptyMarkerReceipts(previous,batch.warnings,batch.inventory);
+    if(receipts===previous)return;
+    this.busy=true;
+    try{
+      await this.persist({...this.data,emptyMarkerReceipts:receipts});
+      this.data.emptyMarkerReceipts=receipts;
+      batch.warnings=batch.warnings.filter(w=>!w.emptyVersion||receipts[w.itemId]!==w.emptyVersion);
+    }finally{this.busy=false;this.emit();}
+  }
   async apply(batch,selected,decisions={},options={}) {
     if(this.busy) throw new Error("A sync is already running.");
     this.begin("Sync");let failure,run,historySaved=false,mutationStarted=false;const completedChanges=[];
@@ -210,17 +265,25 @@ class Controller {
       }
       for(const c of intents)queue.set(c.entry.key,c.entry);
       this.data.sequenceQueue=[...queue.values()];if(intents.length)await this.persist();
-      let completed=0;
+      let completed=0, videosProcessed=0;
+      const videoTotal=chosen.filter(change=>willAppend(change,decisions)).length;
       for(const change of chosen) {
         const detail={current:change.path,completed,total:chosen.length};
-        this.progress("Validating source",detail);
+        const appending=willAppend(change,decisions);
+        const timelineProgress=()=>this.progress("Appending to Footage sequence",{current:change.path,completed:videosProcessed,total:videoTotal,unit:"videos"});
+        if(appending){
+          timelineProgress();
+          // An already-resolved host Promise may only enqueue a microtask.
+          // Give Premiere/UXP a turn to paint and accept input between clips.
+          await new Promise(resolve=>setTimeout(resolve,0));
+        }else this.progress("Validating source",detail);
         await this.assertContext(batch.projectPath,batch.projectId);
         if(change.file) await this.scanner.validate(change.file);
         if(change.kind==="append-footage"||change.kind==="sequence-review"){
-          this.progress("Appending to Footage sequence",detail);
+          if(!appending)this.progress("Checking Footage sequence",detail);
           const Sequence=require("./host/sequence"),entry=queue.get(change.entry.key)||change.entry;
           try{if(change.checkpoint){
-            if(!(await Sequence.snapshot(entry.target)).ledger.imports.some(r=>r.key===entry.key))throw new Error("The completed sequence receipt changed. Scan again.");
+            if(!(await Sequence.readReceipts(entry.target)).imports.some(r=>r.key===entry.key))throw new Error("The completed sequence receipt changed. Scan again.");
           }
           else if(decisions[change.id]==="keep")await Sequence.keep(entry);
           else{
@@ -238,6 +301,7 @@ class Controller {
             entry.failure=e.message;queue.set(entry.key,entry);this.data.sequenceQueue=[...queue.values()];await this.persist();
             sequenceWarnings.push({path:entry.path,message:e.message});this.warn("Media imported; sequence append needs review: "+e.message,entry.path);
           }
+          if(appending){videosProcessed++;timelineProgress();}
           completed++;continue;
         }
         if(change.kind==="clip-markers"||change.kind==="marker-choice") {
@@ -279,8 +343,13 @@ class Controller {
       this.progress("Final project verification",{completed:chosen.length,total:chosen.length});
       const after=await H.inventory(this.project);
       this.checkpoint(fresh,after);
+      // A deferred or failed import has no verified clip for its empty TXT.
+      const receipts=emptyMarkerReceipts(this.data.emptyMarkerReceipts,fresh.warnings,after);
       this.data.history.unshift({...run,count:countChanges(completedChanges),changes:completedChanges,duration:Date.now()-this.operation.startedAt,status:"completed",message:applied?"Sync completed":fresh.changes.length?"No changes applied":"Everything is up to date"});historySaved=true;
-      this.data.history=this.data.history.slice(0,30); await this.persist(); this.error=null; this.batch=await this.analyze();
+      this.data.history=this.data.history.slice(0,30);
+      await this.persist(receipts===this.data.emptyMarkerReceipts?this.data:{...this.data,emptyMarkerReceipts:receipts});
+      if(receipts)this.data.emptyMarkerReceipts=receipts;
+      this.error=null; this.batch=await this.analyze();
       this.progress("Sync finished",{completed:chosen.length,total:chosen.length});
     } catch(e) { failure=e.message;this.error=e.message;if(!historySaved&&this.path){this.data.history.unshift({...run,time:run?.time||new Date().toISOString(),count:countChanges(completedChanges),changes:completedChanges,duration:Date.now()-this.operation.startedAt,status:"failed",error:e.message,errorPath:this.operation.current,stage:this.operation.phase,message:"Sync failed"});this.data.history=this.data.history.slice(0,30);if(mutationStarted)try{await this.persist();}catch(_){/* Preserve the original failure. */}}throw e; }
     finally { await this.finish(failure); }
@@ -294,6 +363,8 @@ class Controller {
   }
   checkpoint(plan,after) {
     const owners=new Map();
+    const clipsByPath = groupBy(after.clips, clip => P.key(clip.mediaPath));
+    const binsByPath = groupBy(after.bins, bin => bin.path);
     for(const link of this.data.links) {
       const root=after.bins.find(b=>b.id===link.binId)||after.bins.find(b=>b.path===link.binPath);
       if(root) { link.binId=root.id; link.binPath=root.path; }
@@ -302,12 +373,12 @@ class Controller {
       const files=new Map(old.files.filter(f=>f.itemId).map(f=>[f.itemId,f]));
       const dirs=new Map(old.dirs.filter(d=>d.binId).map(d=>[d.binId,d]));
       for(const f of proposed.files) {
-        const matches=after.clips.filter(c=>P.key(c.mediaPath)===P.key(f.path));
-        if(matches.length===1) { files.set(matches[0].id,{...f,itemId:matches[0].id}); owners.set(matches[0].id,link.id); }
+        const matches=clipsByPath.get(P.key(f.path));
+        if(matches?.length===1) { files.set(matches[0].id,{...f,itemId:matches[0].id}); owners.set(matches[0].id,link.id); }
       }
       for(const d of proposed.dirs) {
-        const matches=after.bins.filter(b=>b.path===d.binPath);
-        if(matches.length===1) dirs.set(matches[0].id,{...d,binId:matches[0].id});
+        const matches=binsByPath.get(d.binPath);
+        if(matches?.length===1) dirs.set(matches[0].id,{...d,binId:matches[0].id});
       }
       this.data.records[link.id]={files:[...files.values()],dirs:[...dirs.values()]};
     }

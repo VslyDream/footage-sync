@@ -18,7 +18,7 @@ function parseMarkers(text) {
     if(!Number.isSafeInteger(seconds)) { errors.push({line:index+1,message:"Marker time is too large."}); return; }
     markers.push({seconds,color:Number(match[4]),line:index+1});
   });
-  if(!markers.length&&!errors.length) errors.push({line:0,message:"Marker TXT is empty."});
+  if(!markers.length&&!errors.length) errors.push({line:0,code:"empty",message:"Marker TXT is empty."});
   // A malformed source never yields a partially applicable marker list.
   return {markers:errors.length?[]:markers,errors};
 }

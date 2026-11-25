@@ -6,6 +6,17 @@ function scanner(io){
   vm.runInThisContext("(function(require,module,exports){"+fs.readFileSync(filename,"utf8")+"\n})",{filename})(id=>id==="./io"?io:require(path.resolve("plugin/host",id)),mod,mod.exports);return new mod.exports.Scanner();
 }
 const stat=(dir,ino)=>({ino,dev:1,birthtimeMs:1,size:16,mtimeMs:1000,isFile:()=>!dir,isDirectory:()=>dir,isSymbolicLink:()=>false});
+test("only a settled, successfully read blank marker TXT carries the empty classification",async()=>{
+  const io={lstat:async()=>stat(false,1),readFile:async()=>"\uFEFF\r\n  "};
+  const read=()=>scanner(io).txt("D:/Media/clip.txt");
+  const blank=await read();
+  assert.equal(blank.empty,true);
+  assert.ok(blank.stamp);
+  io.readFile=async()=>"invalid";
+  assert.equal((await read()).empty,false);
+  io.readFile=async()=>{throw Error("Read failed");};
+  assert.equal((await read()).empty,undefined);
+});
 test("UXP IO encodes literal special characters once at the filesystem boundary",async()=>{
   const seen=[],io=createIO({lstat:async p=>seen.push(p),rename:async(a,b)=>seen.push(a,b)},true);
   await io.lstat("D:/Media/#5 100%23 ?.wav");await io.rename("D:/Media/#a","D:/Media/%23a");
