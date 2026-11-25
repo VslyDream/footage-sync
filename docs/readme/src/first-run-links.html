@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="shot-size" content="900x400">
+<title>README picture — first run, panel and Links tab</title>
+<!-- Markup and styles adapted from docs/ui/redesign-2026-11/main-panel.html and links.html: the state before a project and links are chosen. Labels follow plugin/workspace-ui.js. -->
+<link rel="stylesheet" href="badges.css">
+<style>
+.fs{font-family:"Segoe UI","Source Sans 3",Arial,sans-serif;font-size:13px;color:#e8e8e8;line-height:1.35}
+.fs *{box-sizing:border-box}
+.pnl{position:absolute;background:#232323;border:1px solid #0f0f0f;overflow:hidden}
+.tabbar{height:24px;background:#1b1b1b;border-bottom:1px solid #2d2d2d;display:flex;align-items:center;padding:0 4px;font-size:11px;color:#d6d6d6;white-space:nowrap;overflow:hidden}
+.acts{display:flex;flex-direction:column}
+.ma{position:relative;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid transparent;border-radius:4px;background:transparent;flex:none}
+.dlg{position:absolute;background:#222225;border:1px solid #47474b;border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.os{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#1a1a1a;color:#e0e0e0;font-size:12px}
+.os-x{background:none;border:0;color:#d0d0d0;font-size:16px;line-height:1;padding:2px 4px}
+.hdr{flex:none;display:flex;align-items:center;height:46px;background:#29292d;border-bottom:1px solid #3a3a3e;padding:0 10px 0 16px}
+.brand{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#203b49;border:1px solid #3983a4;border-radius:4px;color:#8ed8f8;font-size:10px;margin-right:18px}
+.tab{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 16px;color:#a0a0a6;background:none;border:0;border-bottom:2px solid transparent;font:inherit;font-size:14px}
+.tab.on{color:#fff;border-bottom-color:#3088f1}
+.wmore{margin-left:auto;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:transparent;padding:0}
+.strip{flex:none;display:flex;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid #36363a;font-size:12px;color:#8f8f96}
+.strip .v{color:#c4c4c9}
+.sw{flex:none;width:26px;height:14px;border-radius:7px;background:#55555b;position:relative;border:0;padding:0;margin:0 2px}
+.sw span{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#d0d0d4}
+.qbtn{background:none;border:0;color:#9ccaff;font:inherit;font-size:12px;padding:2px 4px}
+.tools{flex:none;display:flex;align-items:center;gap:8px;padding:12px 18px 10px}
+.tf{width:300px;height:30px;padding:0 10px;background:#1d1d1f;border:1px solid #4a4a4e;border-radius:4px;color:#ddd;font:inherit;font-size:13px}
+.tf::placeholder{color:#8a8a90}
+.ibtn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #4a4a50;border-radius:4px;background:transparent;padding:0}
+.body{flex:1;min-height:0;padding:0 18px 12px;overflow:hidden}
+.table{border:1px solid #3c3c41;border-radius:5px;overflow:hidden}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) 190px 180px 36px;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-bottom:1px solid #333337}
+.th{background:#1c1c1f;color:#8f8f96;font-size:10px;letter-spacing:.06em;padding-top:7px;padding-bottom:7px}
+.empty{padding:26px 14px 30px;text-align:center;color:#9a9aa0;font-size:12px}
+.empty b{display:block;color:#e8e8e8;font-size:15px;font-weight:600;margin-bottom:4px}
+.btn{height:32px;min-width:85px;padding:0 16px;border-radius:16px;font:inherit;font-size:14px;font-weight:600}
+.sec{background:transparent;border:2px solid #909090;color:#dcdcdc}
+.cta{background:#1473e6;border:2px solid #1473e6;color:#fff}
+.foot{flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #39393e;background:#1f1f22}
+.hint{color:#9a9aa0;font-size:11px;margin-right:auto}
+</style>
+</head>
+<body>
+<div class="fs shot" style="width: 900px; height: 400px">
+
+  <div class="pnl" style="left: 16px; top: 16px; width: 54px; height: 190px">
+    <div class="tabbar">Footage S</div>
+    <div class="acts" style="padding: 3px">
+      <button class="ma" aria-label="Links" style="width: 46px; height: 46px; margin-bottom: 2px"><svg aria-hidden="true" width="27" height="27" viewBox="0 0 32 32"><path d="M3 3h18v13H3z M12 16h18v13H12z M12 19l9-9" fill="none" stroke="#bcbec2" stroke-width="1.8"></path></svg></button>
+      <button class="ma" aria-label="Sync" style="width: 46px; height: 46px; margin-bottom: 2px"><svg aria-hidden="true" width="27" height="27" viewBox="0 0 32 32"><path d="M25 8a12 12 0 1 1-13-3 M5 4h10v10" fill="none" stroke="#bcbec2" stroke-width="2.4"></path></svg></button>
+      <button class="ma" aria-label="Status" style="width: 46px; height: 46px"><svg aria-hidden="true" width="27" height="27" viewBox="0 0 36 36"><path d="M2 18C8 4 28 4 34 18 28 32 8 32 2 18z" fill="none" stroke="#bcbec2" stroke-width="1.8"></path><circle cx="18" cy="18" r="4" fill="#80baff"></circle></svg></button>
+    </div>
+  </div>
+
+  <div class="dlg" style="left: 104px; top: 16px; width: 780px; height: 368px">
+    <div class="os"><span>Footage Sync</span><button class="os-x" aria-label="Close window">✕</button></div>
+    <div class="hdr">
+      <span class="brand" aria-hidden="true">FS</span>
+      <button class="tab">Changes</button>
+      <button class="tab">History</button>
+      <button class="tab on" aria-current="page">Links</button>
+      <button class="tab">Settings</button>
+      <button class="wmore" aria-label="More"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+    </div>
+    <div class="strip">Into <strong class="v">Not selected</strong> · new videos <button class="sw" role="switch" aria-checked="false" aria-label="Add new videos to timeline"><span></span></button> → <span class="v">No timeline selected</span><button class="qbtn" style="margin-left: auto">Choose…</button></div>
+    <div class="tools">
+      <input class="tf" type="text" aria-label="Search links" placeholder="Search bin or folder">
+      <button class="ibtn" style="margin-left: auto" aria-label="More"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="8" cy="8" r="1.4" fill="#b8b8bd"></circle><circle cx="13" cy="8" r="1.4" fill="#b8b8bd"></circle></svg></button>
+      <button class="btn cta">+ Add link</button>
+    </div>
+    <div class="body">
+      <div class="table">
+        <div class="tr th"><span>BIN ↔ FOLDER</span><span>OPTIONS</span><span>STATE</span><span></span></div>
+        <div class="empty"><b>No folders linked</b>Add a link to connect a Premiere bin to a system folder.</div>
+      </div>
+    </div>
+    <div class="foot">
+      <span class="hint">Saved automatically</span>
+      <button class="btn sec">Close</button>
+    </div>
+  </div>
+
+  <span class="n" style="left: 76px; top: 62px">3</span>
+  <span class="n" style="left: 800px; top: 112px">4</span>
+  <span class="n" style="left: 768px; top: 136px">5</span>
+</div>
+</body>
+</html>

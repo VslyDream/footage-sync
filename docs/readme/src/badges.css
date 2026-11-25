@@ -1,0 +1,5 @@
+/* Shared styles for README pictures: a dark canvas, a screenshot and numbered callouts. */
+html,body{margin:0;background:#191919;overflow:hidden}
+.shot{position:relative}
+.shot img{display:block}
+.n{position:absolute;z-index:9;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#ff3d71;color:#fff;font:700 14px/24px "Segoe UI",Arial,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff,0 2px 8px rgba(0,0,0,.7)}
