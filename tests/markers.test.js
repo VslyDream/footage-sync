@@ -1,16 +1,19 @@
 "use strict";
-const test=require("node:test"),assert=require("node:assert/strict"),{parseMarkers,COLORS}=require("../plugin/core/markers");
-test("user TXT example parses seven red source times",()=>{
+const test=require("node:test"),assert=require("node:assert/strict"),{parseMarkers,signature,COLORS}=require("../plugin/core/markers");
+test("user TXT example parses seven source times; number 1 is the first color",()=>{
   const parsed=parseMarkers("0:00:53,1\n0:01:12,1\n0:01:30,1\n0:01:52,1\n0:03:34,1\n0:04:06,1\n0:04:27,1\n");
-  assert.deepEqual(parsed.errors,[]);assert.deepEqual(parsed.markers.map(m=>m.seconds),[53,72,90,112,214,246,267]);assert.ok(parsed.markers.every(m=>m.color===1));
+  assert.deepEqual(parsed.errors,[]);assert.deepEqual(parsed.markers.map(m=>m.seconds),[53,72,90,112,214,246,267]);assert.ok(parsed.markers.every(m=>COLORS[m.color]==="green"));
 });
-test("Markerbox indexes and BOM/Windows newlines are retained",()=>{
+test("Polden OBS numbers 1\u20138 map to Premiere color indexes 0\u20137; BOM/Windows newlines are accepted",()=>{
   assert.deepEqual(COLORS,["green","red","rose","orange","yellow","white","blue","teal"]);
-  const parsed=parseMarkers("\uFEFF"+COLORS.map((_,i)=>`1:00:0${i},${i}`).join("\r\n"));
-  assert.deepEqual(parsed.markers.map(m=>m.color),[0,1,2,3,4,5,6,7]);assert.equal(parsed.markers[0].seconds,3600);
+  const parsed=parseMarkers("\uFEFF"+COLORS.map((_,i)=>`1:00:0${i},${i+1}`).join("\r\n"));
+  assert.deepEqual(parsed.errors,[]);assert.deepEqual(parsed.markers.map(m=>m.color),[0,1,2,3,4,5,6,7]);assert.equal(parsed.markers[0].seconds,3600);
+});
+test("the signature keeps the number written in the TXT, so earlier receipts still match",()=>{
+  assert.equal(signature(parseMarkers("0:00:53,1\r\n0:01:12,8").markers),"[[53,1],[72,8]]");
 });
 test("bad rows block the entire source with line-specific errors",()=>{
-  for(const bad of ["0:00:01,8","0:60:01,1","0:00:60,1","-1:00:00,1","0:00:01.5,1","0:00:01,1,title","0:00:01:12,1","9007199254740991:00:00,1"]){
+  for(const bad of ["0:00:01,0","0:00:01,9","0:60:01,1","0:00:60,1","-1:00:00,1","0:00:01.5,1","0:00:01,1,title","0:00:01:12,1","9007199254740991:00:00,1"]){
     const parsed=parseMarkers("0:00:01,1\n"+bad);assert.equal(parsed.markers.length,0);assert.equal(parsed.errors[0].line,2);
   }
 });

@@ -17,7 +17,7 @@ test("scanner respects Subfolders Off, ignores sidecars, and reports unavailable
 test("TXT scan is separate from media and invalid, growing and corrected files are retried",async()=>{
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),"footage-markers-")),file=path.join(dir,"a.txt"),s=new Scanner();
   try{
-    await fs.writeFile(file,"0:00:01,1\n0:00:02,8");await fs.utimes(file,new Date(1000),new Date(1000));
+    await fs.writeFile(file,"0:00:01,1\n0:00:02,9");await fs.utimes(file,new Date(1000),new Date(1000));
     const scan=await s.scan({folderPath:dir,subfolders:true},path.join(dir,"p.prproj"));assert.equal(scan.files.length,0);assert.equal(scan.txts.length,1);assert.match(scan.txts[0].error,/Line 2/);assert.equal(scan.txts[0].markers.length,0);
     await fs.writeFile(file,"0:00:01,1");assert.match((await s.txt(file)).error,/still being written/);await fs.utimes(file,new Date(2000),new Date(2000));assert.equal((await s.txt(file)).markers.length,1);
     assert.ok((await s.txt(path.join(dir,"absent.txt"))).error);
